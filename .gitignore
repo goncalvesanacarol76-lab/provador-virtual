@@ -1,0 +1,5 @@
+# Arquivos de Ambiente (Segredos)
+.env
+
+# Dependências Node.js (Todas as node_modules)
+**/node_modules

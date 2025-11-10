@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css">
+  <title>Provador Virtual Fanáticos FC</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Provador Virtual Fanáticos FC</h1>
+
+
+    <section class="shirt-selector">
+      <h2>Escolha uma camisa para experimentar</h2>
+      <div class="carousel-container">
+        <button class="nav-btn left" id="prevBtn">&#10094;</button>
+        <div class="carousel" id="shirtCarousel">
+          <div class="shirt-item" data-src="../assets/brasil-1.webp">
+            <img src="../assets/brasil-1.webp" alt="Brasil">
+            <p>Brasil</p>
+          </div>
+          <div class="shirt-item" data-src="../assets/corinthians-1.webp">
+            <img src="../assets/corinthians-1.webp" alt="Corinthians">
+            <p>Corinthians</p>
+          </div>
+          <div class="shirt-item" data-src="../assets/liverpool-1.webp">
+            <img src="../assets/liverpool-1.webp" alt="Liverpool">
+            <p>Liverpool</p>
+          </div>
+          <div class="shirt-item" data-src="../assets/santos-1.webp">
+            <img src="../assets/santos-1.webp" alt="Santos">
+            <p>Santos</p>
+          </div>
+          <div class="shirt-item" data-src="../assets/flamengo-1.webp">
+            <img src="../assets/flamengo-1.webp" alt="Flamengo">
+            <p>Flamengo</p>
+          </div>
+        </div>
+        <button class="nav-btn right" id="nextBtn">&#10095;</button>
+      </div>
+    </section>
+
+    <div class="upload-section">
+      <div class="upload-box">
+        <label for="personInput">Envie sua foto:</label>
+        <input type="file" id="personInput" accept="image/*" capture="environment" />
+        <button id="openCameraBtn">Tirar Foto</button>
+        <video id="cameraPreview" autoplay class="hidden"></video>
+        <button id="captureBtn" class="hidden">Capturar</button>
+        <img id="personPreview" src="" alt="Prévia da pessoa" class="hidden preview-img">
+      </div>
+    </div>
+
+    <button id="tryonBtn" disabled>Testar roupa</button>
+
+    <div id="progress-container" class="hidden">
+      <div class="progress-bar"></div>
+      <p>Gerando imagem com IA...</p>
+    </div>
+
+    <div id="result" class="result hidden">
+      <h2>Resultado do Provador</h2>
+      <img id="resultImg" src="" alt="Resultado do provador virtual" />
+      <button id="downloadBtn" class="hidden">Baixar Imagem</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
