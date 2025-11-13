@@ -126,7 +126,7 @@ tryonBtn.addEventListener("click", async () => {
   simulateProgress();
 
   try {
-    const initRes = await fetch("http://localhost:5000/api/tryon", {
+    const initRes = await fetch("https://provador-virtual-h719.onrender.com/api/upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -149,7 +149,7 @@ tryonBtn.addEventListener("click", async () => {
     while (status === "PROCESSING" || !finalUrl) {
       await new Promise((r) => setTimeout(r, 4000));
 
-      const checkRes = await fetch("http://localhost:5000/api/tryon", {
+      const checkRes = await fetch("https://provador-virtual-h719.onrender.com/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ task_id: task.task_id }),
