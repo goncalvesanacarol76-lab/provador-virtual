@@ -23,5 +23,8 @@
       sync: false # Mantenha como 'false' se você for adicionar manualmente no painel
     - key: NODE_ENV
       value: production
+    # ESSA LINHA FORÇA O NODE A TRATAR OS ARQUIVOS COMO MÓDULOS ES6 (COM 'import')
+    - key: NODE_OPTIONS
+      value: "--loader ts-node/esm --experimental-specifier-resolution=node"
   # A porta deve ser 5000, conforme configurado no server.js
   port: 5000
