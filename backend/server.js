@@ -129,7 +129,7 @@ app.post('/api/tryon', upload.fields([
         console.error('Erro interno no servidor (Try-On):', error);
         res.status(500).json({ error: 'Erro interno ao processar a requisição.', details: "INTERNAL_SERVER_ERROR" });
     } finally {
-        /
+    
     }
 });
 
