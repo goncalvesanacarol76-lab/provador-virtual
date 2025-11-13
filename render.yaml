@@ -1,0 +1,27 @@
+# Frontend (Static Site)
+- name: provador-virtual-frontend
+  type: static
+  rootDir: frontend
+  buildCommand: "npm install && npm run build"
+  staticPublishPath: dist
+  headers:
+    - path: "/*"
+      name: "Access-Control-Allow-Origin"
+      value: "*"
+
+# Backend (Web Service - Node.js)
+- name: provador-virtual-backend
+  type: web
+  rootDir: backend
+  buildCommand: "npm install"
+  startCommand: "node server.js"
+  env: node
+  plan: starter # Use starter plan to keep costs low
+  # Adicione sua variável de ambiente aqui (REPLICATE_API_TOKEN)
+  envVars:
+    - key: REPLICATE_API_TOKEN
+      sync: false # Mantenha como 'false' se você for adicionar manualmente no painel
+    - key: NODE_ENV
+      value: production
+  # A porta deve ser 5000, conforme configurado no server.js
+  port: 5000
