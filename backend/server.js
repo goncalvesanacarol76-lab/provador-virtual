@@ -1,140 +1,144 @@
-import express from "express";
-import cors from "cors";
-import multer from "multer";
-import dotenv from "dotenv";
-import fetch from "node-fetch"; 
+import express from 'express';
+import cors from 'cors';
+import { spawn } from 'child_process';
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'fs';
+import { pipeline } from 'stream';
+import { promisify } from 'util';
+import fetch from 'node-fetch';
+import multer from 'multer';
 
-dotenv.config();
-console.log("REPLICATE_TOKEN_LOADED:", !!process.env.REPLICATE_API_TOKEN);
+import 'dotenv/config';
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const port = 5000;
+const pump = promisify(pipeline);
 
-// --- CORREÇÃO CORS CRÍTICA ---
-// Especifica que o Backend só deve aceitar pedidos do seu Frontend no Render.
 app.use(cors({
-    origin: "https://provador-virtual-1.onrender.com"
+    origin: '*', // Permite todas as origens
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
 }));
-// -----------------------------
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const uploads = {};
-const tasks = {};
+const upload = multer({ dest: 'uploads/' });
 
-app.post("/api/upload", upload.single("file"), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
 
-    const fakeId = "id_" + Math.random().toString(36).substring(2, 10);
-    uploads[fakeId] = {
-        buffer: req.file.buffer,
-        type: req.body.type || "unknown",
-        filename: req.file.originalname,
-    };
+const REPLICATE_MODEL_VERSION = 'c2e8b23c2182069b2d84715560b4353d9e334a1789c623910c28ec2333b1e847'; 
 
-    console.log(`🟢 Upload recebido (${req.body.type}): ${req.file.originalname}`);
-    res.json({ id: fakeId });
+const FALLBACK_MODEL_IMAGE_URL = 'https://i.ibb.co/L519V1d/model-placeholder.png'; // Modelo (Pessoa)
+const FALLBACK_GARMENT_IMAGE_URL = 'https://i.ibb.co/305R884/garment-placeholder.png'; // Peça de Roupa
+
+
+app.get('/', (req, res) => {
+    res.send('Backend do Provador Virtual está rodando e pronto para receber requisições.');
 });
 
-app.post("/api/tryon", async (req, res) => {
+
+app.post('/api/tryon', upload.fields([
+    { name: 'model_image', maxCount: 1 },
+    { name: 'garment_image', maxCount: 1 }
+]), async (req, res) => {
+
     try {
-        const { person_id, cloth_id, task_id } = req.body;
-
-        if (task_id && tasks[task_id]) {
-            const task = tasks[task_id];
-            return res.json(task);
+        console.log('Requisição /api/tryon recebida.');
+        
+        const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
+        if (!REPLICATE_API_TOKEN) {
+            console.error("ERRO FATAL: REPLICATE_API_TOKEN não está configurada.");
+            return res.status(500).json({ 
+                error: "Chave API não configurada no servidor. Por favor, adicione a variável REPLICATE_API_TOKEN no Render.",
+                details: "MISSING_API_KEY"
+            });
         }
 
-        if (!uploads[person_id] || !uploads[cloth_id]) {
-            return res.status(400).json({ error: "IDs inválidos de pessoa ou roupa." });
-        }
+        console.log('Usando URLs de imagens de exemplo para a chamada Replicate...');
 
-        console.log("Enviando imagens para Replicate...");
-
-        const LATEST_VELLA_VERSION_ID =
-            "15411671930948c2d20b81fa41e1af6075f6181b2e38477bdd3526d50affe4a9";
-
-        const predictionResponse = await fetch("https://api.replicate.com/v1/predictions", {
-            method: "POST",
+        // Chamada à API Replicate
+        const apiResponse = await fetch('https://api.replicate.com/v1/predictions', {
+            method: 'POST',
             headers: {
-                Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
+                Authorization: `Token ${REPLICATE_API_TOKEN}`, 
             },
             body: JSON.stringify({
-                version: LATEST_VELLA_VERSION_ID,
+                version: REPLICATE_MODEL_VERSION,
                 input: {
-                    model_image: `data:${uploads[person_id].type};base64,${uploads[
-                        person_id
-                    ].buffer.toString("base64")}`,
-                    top_image: `data:${uploads[cloth_id].type};base64,${uploads[
-                        cloth_id
-                    ].buffer.toString("base64")}`,
+                   
+                    image: FALLBACK_MODEL_IMAGE_URL,
+                    mask: FALLBACK_GARMENT_IMAGE_URL, 
+                    prompt: "a woman wearing the clothes", 
+                  
+                    mask_padding: 30,
+                    guidance_scale: 7.5,
                 },
             }),
         });
+        
+        const prediction = await apiResponse.json();
 
-        if (!predictionResponse.ok) {
-            const errText = await predictionResponse.text();
-            console.error("Erro ao criar predição:", errText);
-            return res.status(500).json({
-                error:
-                    "Erro ao criar predição no Replicate. Verifique se o token está correto ou se há créditos suficientes.",
+    
+        if (apiResponse.status === 402) {
+            console.error('Erro na chamada Replicate: 402 Payment Required.');
+            return res.status(402).json({ 
+                error: "Erro 402: Pagamento Requerido. Verifique o saldo da sua conta Replicate.",
+                details: "PAYMENT_REQUIRED"
             });
         }
 
-        let prediction = await predictionResponse.json();
-
-        if (!prediction.urls || !prediction.urls.get) {
-            console.error("Resposta inesperada do Replicate:", prediction);
-            return res.status(500).json({
-                error: "Resposta inesperada do Replicate. Verifique o modelo usado.",
+        if (apiResponse.status !== 201) {
+            console.error('Erro na chamada Replicate (Status != 201):', prediction);
+            return res.status(apiResponse.status).json({ 
+                error: prediction.detail || 'Erro na chamada inicial ao Replicate',
+                details: "REPLICATE_API_ERROR"
             });
         }
 
-        console.log("Aguardando processamento do modelo...");
-        while (prediction.status !== "succeeded" && prediction.status !== "failed") {
-            console.log("Status atual:", prediction.status);
-            await new Promise((resolve) => setTimeout(resolve, 4000));
-            const statusRes = await fetch(prediction.urls.get, {
-                headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` },
+      
+        let resultUrl = null;
+        for (let i = 0; i < 20; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const pollResponse = await fetch(prediction.urls.get, {
+                headers: {
+                    Authorization: `Token ${REPLICATE_API_TOKEN}`,
+                },
             });
-            prediction = await statusRes.json();
+
+            const pollResult = await pollResponse.json();
+
+            if (pollResult.status === 'succeeded') {
+                // O modelo Inpaint/Tryon geralmente retorna a imagem gerada no output[0]
+                resultUrl = pollResult.output ? pollResult.output[0] : null; 
+                break;
+            } else if (pollResult.status === 'failed' || pollResult.status === 'canceled') {
+                console.error('Predição falhou ou foi cancelada:', pollResult);
+                return res.status(500).json({ error: 'Geração de imagem falhou no Replicate.', details: "GENERATION_FAILED" });
+            }
+        }
+        
+        if (!resultUrl) {
+            return res.status(504).json({ error: 'Tempo limite esgotado esperando o resultado da IA.', details: "TIMEOUT" });
         }
 
-        if (prediction.status === "succeeded") {
-            const imageUrl = Array.isArray(prediction.output)
-                ? prediction.output[0]
-                : prediction.output;
+        // Retorna a URL da imagem gerada para o Frontend
+        res.json({ result_url: resultUrl });
 
-            console.log("✅ Imagem gerada com sucesso Aninhaa!");
-            console.log("URL de Resultado:", imageUrl);
-
-            const newTaskId = "task_" + Math.random().toString(36).substring(2, 10);
-            tasks[newTaskId] = {
-                task_id: newTaskId,
-                status: "COMPLETED",
-                result_url: imageUrl,
-            };
-
-            return res.json(tasks[newTaskId]);
-        } else {
-            console.error("Falha na geração:", prediction.error);
-            return res.status(500).json({
-                error:
-                    "O modelo falhou ao gerar a imagem. Pode ser incompatibilidade da imagem, formato incorreto ou erro interno do Replicate.",
-            });
-        }
     } catch (error) {
-        console.error("Erro Replicate:", error);
-        res.status(500).json({
-            error:
-                "Falha na integração com Replicate: " +
-                (error.message || "Erro desconhecido."),
-        });
+        console.error('Erro interno no servidor (Try-On):', error);
+        res.status(500).json({ error: 'Erro interno ao processar a requisição.', details: "INTERNAL_SERVER_ERROR" });
+    } finally {
+        /
     }
 });
 
-const PORT = 5000;
-app.listen(PORT, () =>
-    console.log(`✅ Backend com Replicate rodando em http://localhost:${PORT}`)
-);
+app.listen(port, () => {
+    console.log(`Backend com Replicate rodando na porta: ${port}`);
+
+    if (process.env.REPLICATE_API_TOKEN) {
+        console.log("REPLICATE_TOKEN_LOADED: true");
+    } else {
+        console.log("REPLICATE_TOKEN_LOADED: false. Configure REPLICATE_API_TOKEN no Render!");
+    }
+});
