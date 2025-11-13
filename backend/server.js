@@ -13,8 +13,9 @@ const app = express();
 const port = 5000;
 const pump = promisify(pipeline);
 
+// Configuração CORS CRÍTICA: Permite todas as origens
 app.use(cors({
-    origin: '*', // Permite todas as origens
+    origin: '*', 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 }));
@@ -22,6 +23,7 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Configuração do multer para upload de arquivos
 const upload = multer({ dest: 'uploads/' });
 
 
@@ -36,13 +38,20 @@ app.get('/', (req, res) => {
 });
 
 
-app.post('/api/tryon', upload.fields([
+// Rota alterada para /api/upload para corresponder ao que o Frontend está chamando.
+app.post('/api/upload', upload.fields([
     { name: 'model_image', maxCount: 1 },
     { name: 'garment_image', maxCount: 1 }
 ]), async (req, res) => {
 
+    // Nota: O código de tryon abaixo está usando apenas URLs de fallback
+    // e não os arquivos de upload do usuário (req.files). 
+    // Para usar os arquivos, é necessário fazer upload para um serviço como 
+    // AWS S3 ou Cloudinary para obter URLs públicas, pois o Replicate 
+    // requer URLs, não arquivos locais.
+
     try {
-        console.log('Requisição /api/tryon recebida.');
+        console.log('Requisição /api/upload recebida.');
         
         const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
         if (!REPLICATE_API_TOKEN) {
@@ -65,11 +74,11 @@ app.post('/api/tryon', upload.fields([
             body: JSON.stringify({
                 version: REPLICATE_MODEL_VERSION,
                 input: {
-                   
+                    
                     image: FALLBACK_MODEL_IMAGE_URL,
                     mask: FALLBACK_GARMENT_IMAGE_URL, 
                     prompt: "a woman wearing the clothes", 
-                  
+                    
                     mask_padding: 30,
                     guidance_scale: 7.5,
                 },
@@ -95,7 +104,7 @@ app.post('/api/tryon', upload.fields([
             });
         }
 
-      
+        
         let resultUrl = null;
         for (let i = 0; i < 20; i++) {
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -128,9 +137,7 @@ app.post('/api/tryon', upload.fields([
     } catch (error) {
         console.error('Erro interno no servidor (Try-On):', error);
         res.status(500).json({ error: 'Erro interno ao processar a requisição.', details: "INTERNAL_SERVER_ERROR" });
-    } finally {
-    
-    }
+    } 
 });
 
 app.listen(port, () => {
