@@ -20,7 +20,7 @@ async function uploadImage(file, type) {
   formData.append("file", file);
   formData.append("type", type);
 
-  const res = await fetch("http://localhost:5000/api/upload", {
+const res = await fetch("https://provador-virtual-h719.onrender.com/api/upload", {
     method: "POST",
     body: formData,
   });
