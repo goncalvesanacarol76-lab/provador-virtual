@@ -95,8 +95,8 @@ button:disabled {
 
 .carousel-container.simplified .carousel {
   justify-content: center;
-  overflow: visible; 
-  width: auto;      
+  overflow: visible;
+  width: auto;
 }
 
 .carousel {
@@ -108,7 +108,7 @@ button:disabled {
 
 .shirt-item {
   flex: 0 0 auto;
-  width: 250px; 
+  width: 250px;  
   background: #334155;
   border-radius: 12px;
   padding: 10px;
