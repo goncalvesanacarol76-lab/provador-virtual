@@ -94,7 +94,34 @@ async function uploadImage() {
 // LÓGICA DE UI / CÂMERA / CARROSSEL
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const urlCamisaRecebida = params.get('camisa');
+  const nomeCamisaRecebido = params.get('nome');
 
+
+  if (urlCamisaRecebida) {
+    console.log("Camisa recebida da página de produto:", urlCamisaRecebida);
+
+    const primeiroItemCarrossel = document.querySelector('#shirtCarousel .shirt-item');
+    
+    if (primeiroItemCarrossel) {
+      const imgElement = primeiroItemCarrossel.querySelector('img');
+      const pElement = primeiroItemCarrossel.querySelector('p');
+      
+      if (imgElement) {
+        imgElement.src = urlCamisaRecebida;
+        imgElement.alt = nomeCamisaRecebido || "Camisa Selecionada";
+      }
+      if (pElement && nomeCamisaRecebido) {
+        pElement.textContent = nomeCamisaRecebido;
+      }
+
+      setTimeout(() => {
+        primeiroItemCarrossel.click();
+      }, 100); 
+    }
+  }
+  
   // ---------- Carrossel ----------
   const carousel    = document.getElementById('shirtCarousel');
   const shirtItems  = document.querySelectorAll('.shirt-item');
