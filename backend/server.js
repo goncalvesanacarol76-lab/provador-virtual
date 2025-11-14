@@ -42,7 +42,7 @@ app.post("/api/upload", upload.fields([
         const base64Model = `data:${modelFile.mimetype};base64,${modelFile.buffer.toString('base64')}`;
         const base64Garment = `data:${garmentFile.mimetype};base64,${garmentFile.buffer.toString('base64')}`;
 
-        const MODEL_ID = "omnious/vella-1.5";
+        const MODEL_ID = "c2e8b23c2182069b2d84715560b4353d9e334a1789c623910c28ec2333b1e847";
 
         // Criar prediction no Replicate
         const createResp = await fetch("https://api.replicate.com/v1/predictions", {
@@ -52,10 +52,10 @@ app.post("/api/upload", upload.fields([
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: MODEL_ID,
+                version: MODEL_ID,
                 input: {
                     model_image: base64Model,
-                    bottom_image: base64Garment
+                    top_image: base64Garment
                 }
             })
         });
