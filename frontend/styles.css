@@ -106,18 +106,20 @@ button:disabled {
 
 .shirt-item {
   flex: 0 0 auto;
-  width: 300px; 
+  width: 200px;
   background: #334155;
   border-radius: 12px;
   padding: 10px;
-  cursor: default; 
-  transition: box-shadow 0.2s ease;
+  cursor: default;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  border: 3px solid #475569;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .shirt-item img {
   width: 100%;
   border-radius: 8px;
-  min-height: 300px; 
+  min-height: 200px; 
   background-color: #475569;
 }
 
@@ -127,12 +129,11 @@ button:disabled {
 
 .shirt-item:hover {
   transform: none;
-  box-shadow: none;
 }
 
 .shirt-item.selected {
-  border: 3px solid #38bdf8;
-  box-shadow: 0 0 12px #38bdf8;
+  border-color: #38bdf8;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
 }
 
 .nav-btn {
