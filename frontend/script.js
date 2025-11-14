@@ -1,197 +1,220 @@
-const personInput = document.getElementById("personInput");
-const tryonBtn = document.getElementById("tryonBtn");
-const result = document.getElementById("result");
-const resultImg = document.getElementById("resultImg");
-const progressContainer = document.getElementById("progress-container");
-const progressBar = document.querySelector(".progress-bar");
-const downloadBtn = document.getElementById("downloadBtn");
-const openCameraBtn = document.getElementById("openCameraBtn");
-const cameraPreview = document.getElementById("cameraPreview");
-const captureBtn = document.getElementById("captureBtn");
 
-let personId = null;
-let clothId = null;
-let finalUrl = "";
-let progressInterval = null;
-let stream = null;
+const API_BASE_URL = 'https://provador-virtual-backend.onrender.com';
+const API_UPLOAD_ENDPOINT = API_BASE_URL + '/api/upload';
 
-async function uploadImage(file, type) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("type", type);
+let selectedGarmentFile = null;
+let selectedModelFile = null;   
+async function uploadImage() {
+  console.log("Iniciando processo de upload para:", API_UPLOAD_ENDPOINT);
 
-  const res = await fetch("http://localhost:5000/api/upload", {
-    method: "POST",
-    body: formData,
-  });
+  const progressContainer = document.getElementById('progress-container');
+  const statusMessage    = document.getElementById('status-message');
+  const resultDiv        = document.getElementById('result');
+  const resultImg        = document.getElementById('resultImg');
+  const downloadBtn      = document.getElementById('downloadBtn');
 
-  const data = await res.json();
-  return data.id;
+
+  resultImg.src = '';
+  downloadBtn.classList.add('hidden');
+  resultDiv.classList.add('hidden');
+
+  statusMessage.textContent = "Processando... Isso pode levar uns 30 segundos. Aguarde!";
+  statusMessage.classList.remove('hidden');
+  progressContainer.classList.remove('hidden');
+
+  try {
+    const formData = new FormData();
+
+    if (selectedModelFile) {
+      formData.append('model_image', selectedModelFile);
+    }
+    if (selectedGarmentFile) {
+      formData.append('garment_image', selectedGarmentFile);
+    }
+
+    const response = await fetch(API_UPLOAD_ENDPOINT, {
+      method: 'POST',
+      body: formData,
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Resposta inválida do servidor (não é JSON).");
+    }
+
+    if (!response.ok) {
+      console.error("Erro da API:", data);
+      throw new Error(data.error || "Erro ao processar imagem");
+    }
+
+    console.log("Resposta do backend:", data);
+
+    // 4. Recebe a imagem final (result_url)
+    if (data.result_url) {
+      statusMessage.textContent = "Sucesso! Imagem gerada:";
+      resultImg.src = data.result_url;
+      resultDiv.classList.remove('hidden');
+      downloadBtn.classList.remove('hidden');
+
+      downloadBtn.onclick = () => {
+        const a = document.createElement('a');
+        a.href = data.result_url;
+        a.download = 'provador-virtual.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      };
+
+    } else {
+      throw new Error("A IA não retornou a URL da imagem processada.");
+    }
+
+  } catch (error) {
+    console.error("Erro ao tentar a prova virtual:", error);
+    statusMessage.textContent =
+      `Falha na prova virtual: ${error.message}.`;
+  } finally {
+    progressContainer.classList.add('hidden');
+  }
 }
 
-openCameraBtn.onclick = async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    cameraPreview.srcObject = stream;
-    cameraPreview.classList.remove("hidden");
-    captureBtn.classList.remove("hidden");
-  } catch (err) {
-    alert("Não foi possível acessar a câmera.");
-  }
-};
 
-captureBtn.onclick = async () => {
-  const canvas = document.createElement("canvas");
-  canvas.width = cameraPreview.videoWidth;
-  canvas.height = cameraPreview.videoHeight;
+// =========================
+// LÓGICA DE UI / CÂMERA / INTEGRAÇÃO
+// =========================
+document.addEventListener('DOMContentLoaded', () => {
 
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(cameraPreview, 0, 0);
+  const params = new URLSearchParams(window.location.search);
+  const urlCamisaRecebida = params.get('camisa');
+  const nomeCamisaRecebido = params.get('nome');
 
-  canvas.toBlob(async (blob) => {
-    const file = new File([blob], "foto.jpg", { type: "image/jpeg" });
-    personId = await uploadImage(file, "person");
-    stopCamera();
-    checkReady();
-  }, "image/jpeg");
-};
+  const primeiroItemCarrossel = document.querySelector('#shirtCarousel .shirt-item');
 
-function stopCamera() {
-  if (stream) {
-    stream.getTracks().forEach((t) => t.stop());
-    stream = null;
-  }
-  cameraPreview.classList.add("hidden");
-  captureBtn.classList.add("hidden");
-}
+  if (urlCamisaRecebida && primeiroItemCarrossel) {
+    console.log("Camisa recebida da página de produto:", urlCamisaRecebida);
+    
+    const imgElement = primeiroItemCarrossel.querySelector('img');
+    const pElement = primeiroItemCarrossel.querySelector('p');
 
-personInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    personId = await uploadImage(file, "person");
-    checkReady();
-  }
-});
+    if (imgElement) {
+      imgElement.src = urlCamisaRecebida;
+      imgElement.alt = nomeCamisaRecebido || "Camisa Selecionada";
+    }
+    if (pElement && nomeCamisaRecebido) {
+      pElement.textContent = nomeCamisaRecebido;
+    }
 
-const shirts = document.querySelectorAll(".shirt-item");
-shirts.forEach((item) => {
-  item.addEventListener("click", async () => {
-    shirts.forEach((s) => s.classList.remove("selected"));
-    item.classList.add("selected");
+    setTimeout(() => {
+      primeiroItemCarrossel.click(); 
+    }, 100); 
+  }
 
-    const imageUrl = item.dataset.src; 
-    if (!imageUrl) {
-      alert("Imagem da camisa não encontrada!");
-      return;
-    }
+  if (primeiroItemCarrossel) {
+    primeiroItemCarrossel.addEventListener('click', async () => {
+      primeiroItemCarrossel.classList.add('selected');
 
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], "camisa.png", { type: blob.type });
-      clothId = await uploadImage(file, "cloth");
-      checkReady();
-    } catch (error) {
-      console.error("Erro ao carregar a imagem da camisa:", error);
-      alert("Não foi possível carregar a camisa selecionada.");
-    }
-  });
-});
+      const shirtURL = primeiroItemCarrossel.querySelector('img').src;
+      
+      if (!shirtURL) return; 
 
-function checkReady() {
-  tryonBtn.disabled = !(personId && clothId);
-}
+      try {
+        console.log("A carregar ficheiro da camisa...");
+        const response = await fetch(shirtURL);
+        const blob = await response.blob();
+        
+        selectedGarmentFile = new File([blob], "camisa.png", { type: blob.type });
+        
+        checkReadyToTryOn();
+      
+      } catch (error) {
+        console.error("Erro ao carregar a imagem da camisa:", error);
+        selectedGarmentFile = null;
+      }
+    });
+  }
 
-function simulateProgress() {
-  let width = 0;
-  if (progressInterval) clearInterval(progressInterval);
-  progressInterval = setInterval(() => {
-    if (width >= 95) return;
-    width += Math.random() * 5;
-    if (width > 95) width = 95;
-    progressBar.style.width = width + "%";
-  }, 700);
-}
+  // ---------- Upload da pessoa ----------
+  const personInput    = document.getElementById('personInput');
+  const personPreview  = document.getElementById('personPreview');
 
-function cleanupProgress() {
-  if (progressInterval) clearInterval(progressInterval);
-  progressBar.style.width = "100%";
-  progressContainer.classList.add("hidden");
-}
+  personInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    selectedModelFile = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      personPreview.src = ev.target.result;
+      personPreview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+    stopCameraIfRunning();
+    checkReadyToTryOn();
+  });
 
-tryonBtn.addEventListener("click", async () => {
-  result.classList.add("hidden");
-  progressContainer.classList.remove("hidden");
-  progressBar.style.width = "0%";
-  simulateProgress();
 
-  try {
-    const initRes = await fetch("http://localhost:5000/api/tryon", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        person_id: personId,
-        cloth_id: clothId,
-      }),
-    });
+  // ---------- Câmera ----------
+  const openCameraBtn = document.getElementById('openCameraBtn');
+  const captureBtn    = document.getElementById('captureBtn');
+  const cameraPreview = document.getElementById('cameraPreview');
+  let cameraStream = null;
 
-    const task = await initRes.json();
+  async function startCamera() {
+    try {
+      cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      cameraPreview.srcObject = cameraStream;
+      cameraPreview.classList.remove('hidden');
+      captureBtn.classList.remove('hidden');
+    } catch (err) {
+      alert("Não foi possível acessar a câmera.");
+    }
+  }
 
-    if (!task.task_id) {
-      alert("Erro ao iniciar a geração.");
-      cleanupProgress();
-      return;
-    }
+  function stopCameraIfRunning() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+    }
+    cameraPreview.classList.add('hidden');
+    captureBtn.classList.add('hidden');
+  }
 
-    let status = task.status;
-    finalUrl = task.result_url || "";
+  openCameraBtn.addEventListener('click', startCamera);
 
-    while (status === "PROCESSING" || !finalUrl) {
-      await new Promise((r) => setTimeout(r, 4000));
+  captureBtn.addEventListener('click', () => {
+    if (!cameraStream) return;
+    const video  = cameraPreview;
+    const canvas = document.createElement('canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const checkRes = await fetch("http://localhost:5000/api/tryon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task_id: task.task_id }),
-      });
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      selectedModelFile = new File([blob], 'foto-camera.png', { type: 'image/png' });
+      const imageUrl = URL.createObjectURL(blob);
+      personPreview.src = imageUrl;
+      personPreview.classList.remove('hidden');
+      stopCameraIfRunning();
+      checkReadyToTryOn();
+    }, 'image/png');
+  });
 
-      const checkData = await checkRes.json();
-      status = checkData.status;
-      finalUrl = checkData.result_url || "";
 
-      if (status === "FAILED") {
-        alert("Erro: falha na geração da imagem.");
-        cleanupProgress();
-        return;
-      }
-    }
+  // ---------- Botão "Testar roupa" ----------
+  const tryonBtn = document.getElementById('tryonBtn');
 
-    cleanupProgress();
-    resultImg.src = finalUrl;
-    result.classList.remove("hidden");
-    downloadBtn.classList.remove("hidden");
+  function checkReadyToTryOn() {
+    const hasShirt = !!selectedGarmentFile; 
+    const hasModel = !!selectedModelFile;
+    tryonBtn.disabled = !(hasShirt && hasModel);
+  }
 
-    downloadBtn.onclick = async () => {
-      try {
-        const response = await fetch(finalUrl);
-        const blob = await response.blob();
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "provador-virtual.png";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } catch (err) {
-        console.error("Erro ao salvar imagem:", err);
-        alert("Não foi possível salvar a imagem.");
-      }
-    };
-  } catch (error) {
-    console.error("Erro geral:", error);
-    alert("Erro de conexão com o servidor.");
-    cleanupProgress();
-  }
+  tryonBtn.addEventListener('click', () => {
+    if (!tryonBtn.disabled) {
+      uploadImage();
+    }
+  });
 });
