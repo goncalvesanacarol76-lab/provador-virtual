@@ -4,12 +4,12 @@
 const API_BASE_URL = 'https://provador-virtual-backend.onrender.com';
 const API_UPLOAD_ENDPOINT = API_BASE_URL + '/api/upload';
 
-let selectedGarmentFile = null; // (opcional, hoje o backend usa fallback)
-let selectedModelFile = null;   // foto da pessoa (upload ou câmera)
+let selectedGarmentFile = null; // (opcional)
+let selectedModelFile = null;   // foto da pessoa
 
 
 // =========================
-// FUNÇÃO PRINCIPAL: CHAMAR BACKEND / REPLICATE
+// FUNÇÃO PRINCIPAL: CHAMAR BACKEND
 // =========================
 async function uploadImage() {
   console.log("Iniciando processo de upload para:", API_UPLOAD_ENDPOINT);
@@ -32,9 +32,12 @@ async function uploadImage() {
   try {
     const formData = new FormData();
 
+    // Foto da pessoa (obrigatório)
     if (selectedModelFile) {
       formData.append('model_image', selectedModelFile);
     }
+
+    // Camisa selecionada (apenas marcação, backend usa default)
     if (selectedGarmentFile) {
       formData.append('garment_image', selectedGarmentFile);
     }
@@ -44,21 +47,22 @@ async function uploadImage() {
       body: formData,
     });
 
-    if (!response.ok) {
-      let errorData = {};
-      try {
-        errorData = await response.json();
-      } catch (_) {}
-
-      console.error("Erro da API:", errorData);
-      throw new Error(errorData.error || response.statusText);
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw new Error("Resposta inválida do servidor.");
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      console.error("Erro da API:", data);
+      throw new Error(data.error || "Erro ao processar imagem");
+    }
+
     console.log("Resposta do backend:", data);
 
     if (data.result_url) {
-      statusMessage.textContent = "Sucesso! Imagem gerada pela IA:";
+      statusMessage.textContent = "Sucesso! Imagem gerada:";
       resultImg.src = data.result_url;
       resultDiv.classList.remove('hidden');
 
@@ -71,6 +75,7 @@ async function uploadImage() {
         a.click();
         document.body.removeChild(a);
       };
+
     } else {
       throw new Error("A IA não retornou a URL da imagem processada.");
     }
@@ -78,8 +83,8 @@ async function uploadImage() {
   } catch (error) {
     console.error("Erro ao tentar a prova virtual:", error);
     statusMessage.textContent =
-      `Falha na prova virtual: ${error.message}. Veja o console para mais detalhes.`;
-    alert("Ops! Não foi possível gerar a imagem. Veja o console do navegador.");
+      `Falha na prova virtual: ${error.message}. Veja o console para detalhes.`;
+    alert("Ops! Não foi possível gerar a imagem. Veja o console.");
 
   } finally {
     progressContainer.classList.add('hidden');
@@ -91,7 +96,8 @@ async function uploadImage() {
 // LÓGICA DE UI / CÂMERA / CARROSSEL
 // =========================
 document.addEventListener('DOMContentLoaded', () => {
-  // ---------- Carrossel de camisas ----------
+
+  // ---------- Carrossel ----------
   const carousel    = document.getElementById('shirtCarousel');
   const shirtItems  = document.querySelectorAll('.shirt-item');
   const prevBtn     = document.getElementById('prevBtn');
@@ -127,15 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
       item.classList.add('selected');
       currentIndex = idx;
 
-      // (Opcional) se quiser transformar a imagem local em File para mandar pro backend:
-      // por enquanto não é obrigatório, pois o backend está usando imagem fixa
-      // então só vamos guardar que tem uma camisa selecionada
-      selectedGarmentFile = true; // apenas marca que tem camisa
+      selectedGarmentFile = true; // apenas indica que escolheu
       checkReadyToTryOn();
     });
   });
 
-  // ---------- Upload de foto ----------
+
+  // ---------- Upload da pessoa ----------
   const personInput    = document.getElementById('personInput');
   const personPreview  = document.getElementById('personPreview');
 
@@ -156,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkReadyToTryOn();
   });
 
+
   // ---------- Câmera ----------
   const openCameraBtn = document.getElementById('openCameraBtn');
   const captureBtn    = document.getElementById('captureBtn');
@@ -171,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
       captureBtn.classList.remove('hidden');
     } catch (err) {
       console.error("Erro ao acessar câmera:", err);
-      alert("Não foi possível acessar a câmera. Verifique permissões do navegador.");
+      alert("Não foi possível acessar a câmera.");
     }
   }
 
@@ -212,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
       checkReadyToTryOn();
     }, 'image/png');
   });
+
 
   // ---------- Botão "Testar roupa" ----------
   const tryonBtn = document.getElementById('tryonBtn');
