@@ -71,18 +71,17 @@ app.post('/api/upload', upload.fields([
                 'Content-Type': 'application/json',
                 Authorization: `Token ${REPLICATE_API_TOKEN}`, 
             },
-            body: JSON.stringify({
-                version: REPLICATE_MODEL_VERSION,
-                input: {
-                    
-                    image: FALLBACK_MODEL_IMAGE_URL,
-                    mask: FALLBACK_GARMENT_IMAGE_URL, 
-                    prompt: "a woman wearing the clothes", 
-                    
-                    mask_padding: 30,
-                    guidance_scale: 7.5,
-                },
-            }),
+          body: JSON.stringify({
+              version: REPLICATE_MODEL_VERSION,
+             input: {
+                model_image: FALLBACK_MODEL_IMAGE_URL,     // modelo (pessoa)
+                top_image: FALLBACK_GARMENT_IMAGE_URL,     // camisa
+                num_outputs: 1,
+             output_format: "webp",
+        seed: 42                                    // opcional, só p/ ser reproduzível
+  },
+}),
+
         });
         
         const prediction = await apiResponse.json();
