@@ -106,7 +106,7 @@ button:disabled {
 
 .shirt-item {
   flex: 0 0 auto;
-  width: 200px;
+  width: 200px !important;
   background: #334155;
   border-radius: 12px;
   padding: 10px;
