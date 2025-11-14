@@ -104,16 +104,14 @@ button:disabled {
   padding: 10px;
 }
 
-/* --- AJUSTES PARA A CAMISA NO CONTAINER --- */
 .shirt-item {
   flex: 0 0 auto;
   width: 200px;
-  height: 200px; /* Define altura fixa para melhor controle */
-  display: flex; /* Habilita Flexbox */
-  flex-direction: column; /* Organiza Imagem e P em coluna */
-  justify-content: center; /* Centraliza verticalmente o conteúdo */
-  align-items: center; /* Centraliza horizontalmente o conteúdo */
-  
+  height: 200px; 
+  display: flex; 
+  flex-direction: column;
+  justify-content: center; 
+  align-items: center; 
   background: #334155;
   border-radius: 12px;
   padding: 10px;
@@ -123,13 +121,17 @@ button:disabled {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+.shirt-item selected img{
+  width: 200px;
+}
+
 .shirt-item img {
-  width: 90%; /* Limita a largura a 90% do contêiner */
-  max-height: 90%; /* Limita a altura a 90% do contêiner */
-  object-fit: contain; /* 💡 ESSENCIAL: Faz a imagem caber sem cortar, mantendo a proporção */
+  width: 90%; 
+  max-height: 90%; 
+  object-fit: contain; 
   border-radius: 8px;
-  background-color: transparent; /* Remove a cor de fundo do elemento IMG */
-  margin-bottom: 5px; /* Adiciona espaço entre a imagem e o texto */
+  background-color: transparent; 
+  margin-bottom: 5px; 
 }
 
 .shirt-item p {
@@ -139,7 +141,6 @@ button:disabled {
   word-break: break-word;
   padding: 0 2px;
 }
-/* --- FIM DOS AJUSTES --- */
 
 .shirt-item:hover {
   transform: none;
