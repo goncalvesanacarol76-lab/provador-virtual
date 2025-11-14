@@ -1,14 +1,13 @@
-
 const API_BASE_URL = 'https://provador-virtual-backend.onrender.com';
 const API_UPLOAD_ENDPOINT = API_BASE_URL + '/api/upload';
 
-let selectedGarmentFile = null; // (opcional)
+let selectedGarmentFile = null; // camisa
 let selectedModelFile = null;   // foto da pessoa
 
 
-// =========================
-// FUNÇÃO PRINCIPAL: CHAMAR BACKEND
-// =========================
+// ======================================================
+// FUNÇÃO PRINCIPAL: FAZER UPLOAD E CHAMAR O BACKEND
+// ======================================================
 async function uploadImage() {
   console.log("Iniciando processo de upload para:", API_UPLOAD_ENDPOINT);
 
@@ -18,7 +17,7 @@ async function uploadImage() {
   const resultImg        = document.getElementById('resultImg');
   const downloadBtn      = document.getElementById('downloadBtn');
 
-  // limpar estado anterior
+  // limpar tela anterior
   resultImg.src = '';
   downloadBtn.classList.add('hidden');
   resultDiv.classList.add('hidden');
@@ -28,24 +27,19 @@ async function uploadImage() {
   progressContainer.classList.remove('hidden');
 
   try {
+    if (!selectedModelFile) throw new Error("Envie uma foto ou tire uma foto.");
+    if (!selectedGarmentFile) throw new Error("Selecione uma camisa do carrossel.");
+
     const formData = new FormData();
-
-    // Foto da pessoa (obrigatório)
-    if (selectedModelFile) {
-      formData.append('model_image', selectedModelFile);
-    }
-
-    // Camisa selecionada (apenas marcação, backend usa default)
-    if (selectedGarmentFile) {
-      formData.append('garment_image', selectedGarmentFile);
-    }
+    formData.append('model_image', selectedModelFile);
+    formData.append('garment_image', selectedGarmentFile);
 
     const response = await fetch(API_UPLOAD_ENDPOINT, {
       method: 'POST',
       body: formData,
     });
 
-    let data;
+    let data = {};
     try {
       data = await response.json();
     } catch {
@@ -54,16 +48,19 @@ async function uploadImage() {
 
     if (!response.ok) {
       console.error("Erro da API:", data);
-      throw new Error(data.error || "Erro ao processar imagem");
+      const msg = data.error || "Erro ao processar a imagem.";
+      throw new Error(msg);
     }
 
     console.log("Resposta do backend:", data);
 
+    // sucesso
     if (data.result_url) {
       statusMessage.textContent = "Sucesso! Imagem gerada:";
       resultImg.src = data.result_url;
       resultDiv.classList.remove('hidden');
 
+      // botão download
       downloadBtn.classList.remove('hidden');
       downloadBtn.onclick = () => {
         const a = document.createElement('a');
@@ -80,9 +77,8 @@ async function uploadImage() {
 
   } catch (error) {
     console.error("Erro ao tentar a prova virtual:", error);
-    statusMessage.textContent =
-      `Falha na prova virtual: ${error.message}. Veja o console para detalhes.`;
-    alert("Ops! Não foi possível gerar a imagem. Veja o console.");
+    statusMessage.textContent = `Falha: ${error.message}`;
+    alert("Ops! " + error.message);
 
   } finally {
     progressContainer.classList.add('hidden');
@@ -90,39 +86,43 @@ async function uploadImage() {
 }
 
 
-// =========================
+
+// ======================================================
 // LÓGICA DE UI / CÂMERA / CARROSSEL
-// =========================
+// ======================================================
 document.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const urlCamisaRecebida = params.get('camisa');
-  const nomeCamisaRecebido = params.get('nome');
+
+  // Receber camisa da página anterior
+  const params = new URLSearchParams(window.location.search);
+  const urlCamisaRecebida = params.get('camisa');
+  const nomeCamisaRecebido = params.get('nome');
+
+  if (urlCamisaRecebida) {
+    console.log("Camisa recebida:", urlCamisaRecebida);
+
+    const primeiroItemCarrossel = document.querySelector('#shirtCarousel .shirt-item');
+    
+    if (primeiroItemCarrossel) {
+      const imgElement = primeiroItemCarrossel.querySelector('img');
+      const pElement   = primeiroItemCarrossel.querySelector('p');
+
+      if (imgElement) {
+        imgElement.src = urlCamisaRecebida;
+        imgElement.alt = nomeCamisaRecebido || "Camisa Selecionada";
+      }
+      if (pElement && nomeCamisaRecebido) {
+        pElement.textContent = nomeCamisaRecebido;
+      }
+
+      setTimeout(() => {
+        primeiroItemCarrossel.click();
+      }, 100);
+    }
+  }
 
 
-  if (urlCamisaRecebida) {
-    console.log("Camisa recebida da página de produto:", urlCamisaRecebida);
 
-    const primeiroItemCarrossel = document.querySelector('#shirtCarousel .shirt-item');
-    
-    if (primeiroItemCarrossel) {
-      const imgElement = primeiroItemCarrossel.querySelector('img');
-      const pElement = primeiroItemCarrossel.querySelector('p');
-      
-      if (imgElement) {
-        imgElement.src = urlCamisaRecebida;
-        imgElement.alt = nomeCamisaRecebido || "Camisa Selecionada";
-      }
-      if (pElement && nomeCamisaRecebido) {
-        pElement.textContent = nomeCamisaRecebido;
-      }
-
-      setTimeout(() => {
-        primeiroItemCarrossel.click();
-      }, 100); 
-    }
-  }
-  
-  // ---------- Carrossel ----------
+  // ========= Carrossel =========
   const carousel    = document.getElementById('shirtCarousel');
   const shirtItems  = document.querySelectorAll('.shirt-item');
   const prevBtn     = document.getElementById('prevBtn');
@@ -151,33 +151,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Selecionar camisa
+
+
+  // ========= Selecionar camisa =========
  shirtItems.forEach((item, idx) => {
-    item.addEventListener('click', async () => {
-      shirtItems.forEach(i => i.classList.remove('selected'));
-      item.classList.add('selected');
-      currentIndex = idx;
+    item.addEventListener('click', async () => {
+      shirtItems.forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      currentIndex = idx;
 
-      const shirtURL = item.querySelector('img').src;
-      
-      try {
-        const response = await fetch(shirtURL);
-        const blob = await response.blob();
-        
-        selectedGarmentFile = new File([blob], "camisa.png", { type: blob.type });
-        
-        checkReadyToTryOn();
-      
-      } catch (error) {
-        console.error("Erro ao carregar a imagem da camisa:", error);
-        alert("Não foi possível carregar esta camisa.");
-        selectedGarmentFile = null;
-      }
-    });
-  });
+      const shirtURL = item.querySelector('img').src;
+
+      try {
+        const response = await fetch(shirtURL);
+        const blob = await response.blob();
+
+        selectedGarmentFile = new File([blob], "camisa.png", { type: blob.type });
+
+        checkReadyToTryOn();
+
+      } catch (error) {
+        console.error("Erro ao carregar a imagem da camisa:", error);
+        alert("Não foi possível carregar esta camisa.");
+        selectedGarmentFile = null;
+      }
+    });
+  });
 
 
-  // ---------- Upload da pessoa ----------
+
+  // ========= Upload da pessoa =========
   const personInput    = document.getElementById('personInput');
   const personPreview  = document.getElementById('personPreview');
 
@@ -199,7 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  // ---------- Câmera ----------
+
+  // ========= Câmera =========
   const openCameraBtn = document.getElementById('openCameraBtn');
   const captureBtn    = document.getElementById('captureBtn');
   const cameraPreview = document.getElementById('cameraPreview');
@@ -257,7 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
-  // ---------- Botão "Testar roupa" ----------
+
+  // ========= Botão "Testar Roupa" =========
   const tryonBtn = document.getElementById('tryonBtn');
 
   function checkReadyToTryOn() {
