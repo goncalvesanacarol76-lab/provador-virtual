@@ -117,7 +117,7 @@ button:disabled {
 }
 
 .shirt-item img {
-  width: 50%;
+  width: 50% !important;
   border-radius: 8px;
   min-height: 200px; 
   background-color: #475569;
