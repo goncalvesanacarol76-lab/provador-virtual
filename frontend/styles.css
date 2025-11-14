@@ -121,10 +121,6 @@ button:disabled {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.shirt-item selected img{
-  width: 200px;
-}
-
 .shirt-item img {
   width: 90%; 
   max-height: 90%; 
