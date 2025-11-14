@@ -1,3 +1,4 @@
+// server.js
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -7,37 +8,44 @@ import 'dotenv/config';
 const app = express();
 const port = process.env.PORT || 5000;
 
+// CORS público (se quiser restringir, coloque a origem do seu front)
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// upload em memória → necessário pro base64
-const upload = multer({ storage: multer.memoryStorage() });
+// multer em memória (evita salvar em disco)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 6 * 1024 * 1024 // limite 6MB por arquivo (ajuste se quiser)
+  }
+});
 
 app.post("/api/upload", upload.fields([
     { name: "model_image", maxCount: 1 },   // foto da pessoa
-    { name: "garment_image", maxCount: 1 }  // camisa
+    { name: "garment_image", maxCount: 1 }  // imagem da camisa
 ]), async (req, res) => {
 
     try {
+        // checagens básicas
         if (!process.env.REPLICATE_API_TOKEN) {
-            return res.status(500).json({ error: "API KEY DO REPLICATE NÃO SETADA" });
+            return res.status(500).json({ error: "REPLICATE_API_TOKEN não configurada." });
         }
 
-        if (!req.files.model_image) {
-            return res.status(400).json({ error: "Imagem da pessoa não enviada" });
-        }
-        if (!req.files.garment_image) {
-            return res.status(400).json({ error: "Imagem da camisa não enviada" });
+        if (!req.files || !req.files.model_image || !req.files.garment_image) {
+            return res.status(400).json({ error: "Envie model_image e garment_image." });
         }
 
-        // converter imagens para base64
-        const base64Model = `data:${req.files.model_image[0].mimetype};base64,${req.files.model_image[0].buffer.toString("base64")}`;
-        const base64Garment = `data:${req.files.garment_image[0].mimetype};base64,${req.files.garment_image[0].buffer.toString("base64")}`;
+        // converte para base64 inline (data URI)
+        const modelFile = req.files.model_image[0];
+        const garmentFile = req.files.garment_image[0];
+
+        const base64Model = `data:${modelFile.mimetype};base64,${modelFile.buffer.toString('base64')}`;
+        const base64Garment = `data:${garmentFile.mimetype};base64,${garmentFile.buffer.toString('base64')}`;
 
         const MODEL_ID = "omnious/vella-1.5";
 
-        // criar prediction
-        const reqPrediction = await fetch("https://api.replicate.com/v1/predictions", {
+        // Criar prediction no Replicate
+        const createResp = await fetch("https://api.replicate.com/v1/predictions", {
             method: "POST",
             headers: {
                 "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}`,
@@ -46,50 +54,74 @@ app.post("/api/upload", upload.fields([
             body: JSON.stringify({
                 model: MODEL_ID,
                 input: {
-                    model_image: base64Model,   // foto do usuário
-                    bottom_image: base64Garment // camisa selecionada
+                    model_image: base64Model,
+                    bottom_image: base64Garment
                 }
             })
         });
 
-        const prediction = await reqPrediction.json();
+        const createJson = await createResp.json();
+        console.log("Create prediction response:", createJson);
 
-        if (!reqPrediction.ok) {
-            return res.status(500).json({ error: prediction.detail || "Erro na criação da prediction" });
+        if (!createResp.ok) {
+            // retorna a mensagem do Replicate
+            return res.status(createResp.status || 500).json({
+                error: createJson.detail || "Erro criando a prediction no Replicate.",
+                raw: createJson
+            });
         }
 
-        // polling
+        // Polling para aguardar o resultado
         let finalOutput = null;
+        const getUrl = createJson.urls?.get;
+        if (!getUrl) {
+            return res.status(500).json({ error: "Resposta inesperada do Replicate (sem urls.get)." });
+        }
 
-        for (let i = 0; i < 20; i++) {
-            await new Promise(r => setTimeout(r, 2000));
+        for (let i = 0; i < 30; i++) {
+            await new Promise(r => setTimeout(r, 2000)); // 2s
 
-            const poll = await fetch(prediction.urls.get, {
+            const pollResp = await fetch(getUrl, {
                 headers: { "Authorization": `Token ${process.env.REPLICATE_API_TOKEN}` }
             });
-
-            const pollJson = await poll.json();
-
-            console.log("STATUS:", pollJson.status);
+            const pollJson = await pollResp.json();
+            console.log("poll status:", pollJson.status);
 
             if (pollJson.status === "succeeded") {
-                finalOutput = pollJson.output[0];
+                // output normalmente é array de URLs ou objetos
+                // alguns modelos retornam array de strings ou array de objetos
+                finalOutput = Array.isArray(pollJson.output) ? pollJson.output[0] : pollJson.output;
                 break;
+            }
+
+            if (pollJson.status === "failed" || pollJson.status === "canceled") {
+                return res.status(500).json({ error: "Geração falhou no Replicate", details: pollJson });
             }
         }
 
         if (!finalOutput) {
-            return res.status(504).json({ error: "Timeout esperando resultado da IA" });
+            return res.status(504).json({ error: "Timeout aguardando o resultado do modelo." });
         }
 
-        res.json({ result_url: finalOutput });
+        // finalOutput pode ser uma URL (string) ou objeto com .url()
+        // garantir uma URL string para enviar ao frontend
+        let resultUrl = finalOutput;
+        // se for objeto que tem url() (quando usando SDK), tenta extrair
+        try {
+          if (typeof finalOutput === 'object' && finalOutput !== null) {
+            if (finalOutput.url) resultUrl = finalOutput.url;
+            else if (finalOutput[0] && typeof finalOutput[0] === 'string') resultUrl = finalOutput[0];
+          }
+        } catch (_) {}
+
+        return res.json({ result_url: resultUrl });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Erro interno" });
+        console.error("Erro interno /api/upload:", err);
+        return res.status(500).json({ error: "Erro interno do servidor", details: err.message });
     }
 });
 
 app.listen(port, () => {
-    console.log("Server rodando na porta " + port);
+    console.log(`Backend rodando na porta ${port}`);
 });
