@@ -1,84 +1,84 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 body {
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(145deg, #0a0f1f, #0f172a);
-  color: #f1f5f9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(145deg, #0a0f1f, #0f172a);
+  color: #f1f5f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
 }
 
 .container {
-  background: #1e293b;
-  border-radius: 20px;
-  padding: 25px;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
-  text-align: center;
-  transition: all 0.3s ease;
+  background: #1e293b;
+  border-radius: 20px;
+  padding: 25px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
 h1 {
-  margin-bottom: 20px;
-  color: #38bdf8;
-  font-size: 1.6rem;
+  margin-bottom: 20px;
+  color: #38bdf8;
+  font-size: 1.6rem;
 }
 
 .upload-section {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 25px;
 }
 
 .upload-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
 }
 
 label {
-  font-weight: 600;
-  color: #93c5fd;
-  font-size: 0.9rem;
+  font-weight: 600;
+  color: #93c5fd;
+  font-size: 0.9rem;
 }
 
 input[type="file"] {
-  background: #334155;
-  border: 1px solid #475569;
-  padding: 10px;
-  border-radius: 10px;
-  color: #f1f5f9;
-  cursor: pointer;
+  background: #334155;
+  border: 1px solid #475569;
+  padding: 10px;
+  border-radius: 10px;
+  color: #f1f5f9;
+  cursor: pointer;
 }
 
 button {
-  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
-  border: none;
-  padding: 12px 25px;
-  border-radius: 10px;
-  color: #0f172a;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.3s ease;
-  font-size: 1rem;
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  border: none;
+  padding: 12px 25px;
+  border-radius: 10px;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+  font-size: 1rem;
 }
 
 button:hover {
-  transform: scale(1.05);
-  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
 button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .shirt-selector {
@@ -94,9 +94,9 @@ button:disabled {
 }
 
 .carousel-container.simplified .carousel {
-  justify-content: center;
-  overflow: visible;
-  width: auto;
+  justify-content: center;
+  overflow: visible;
+  width: auto;
 }
 
 .carousel {
@@ -104,29 +104,42 @@ button:disabled {
   padding: 10px;
 }
 
+/* --- AJUSTES PARA A CAMISA NO CONTAINER --- */
 .shirt-item {
   flex: 0 0 auto;
-  width: 200px !important;
+  width: 200px;
+  height: 200px; /* Define altura fixa para melhor controle */
+  display: flex; /* Habilita Flexbox */
+  flex-direction: column; /* Organiza Imagem e P em coluna */
+  justify-content: center; /* Centraliza verticalmente o conteúdo */
+  align-items: center; /* Centraliza horizontalmente o conteúdo */
+  
   background: #334155;
   border-radius: 12px;
   padding: 10px;
   cursor: default;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  border: 3px solid #475569;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border: 3px solid #475569;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .shirt-item img {
-  width: 100%; 
-  max-height: 200px;
-  object-fit: contain;
+  width: 90%; /* Limita a largura a 90% do contêiner */
+  max-height: 90%; /* Limita a altura a 90% do contêiner */
+  object-fit: contain; /* 💡 ESSENCIAL: Faz a imagem caber sem cortar, mantendo a proporção */
   border-radius: 8px;
-  background-color: #475569; 
+  background-color: transparent; /* Remove a cor de fundo do elemento IMG */
+  margin-bottom: 5px; /* Adiciona espaço entre a imagem e o texto */
 }
 
 .shirt-item p {
-  color: #f1f5f9;
+  color: #f1f5f9;
+  font-size: 0.85em;
+  text-align: center;
+  word-break: break-word;
+  padding: 0 2px;
 }
+/* --- FIM DOS AJUSTES --- */
 
 .shirt-item:hover {
   transform: none;
@@ -138,33 +151,33 @@ button:disabled {
 }
 
 .nav-btn {
-  border: none;
-  background: #38bdf8;
-  color: white;
-  font-size: 20px;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  cursor: pointer;
-  transition: 0.3s;
+  border: none;
+  background: #38bdf8;
+  color: white;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
 .nav-btn:hover {
-  background: #0ea5e9;
+  background: #0ea5e9;
 }
 
 .result {
-  text-align: center;
-  margin-top: 30px;
+  text-align: center;
+  margin-top: 30px;
 }
 
 #resultImg {
-  width: 100%;
-  border-radius: 12px;
-  margin-top: 15px;
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 15px;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
 }
 
 .hidden {
-  display: none;
+  display: none;
 }
