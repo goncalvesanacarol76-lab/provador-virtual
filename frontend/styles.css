@@ -82,49 +82,57 @@ button:disabled {
 }
 
 .shirt-selector {
-  text-align: center;
-  margin: 30px 0 40px;
+  text-align: center;
+  margin: 30px 0 40px;
 }
 
 .carousel-container {
-  position: relative;
-  display: flex;
-  align-items: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.carousel-container.simplified .carousel {
   justify-content: center;
+  overflow: visible;
+  width: auto;
 }
 
 .carousel {
-  display: flex;
-  gap: 15px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  padding: 10px;
-  width: 85%;
+  display: flex;
+  padding: 10px;
 }
 
 .shirt-item {
-  flex: 0 0 auto;
-  width: 110px;
-  background: #334155;
-  border-radius: 12px;
-  padding: 10px;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex: 0 0 auto;
+  width: 300px; 
+  background: #334155;
+  border-radius: 12px;
+  padding: 10px;
+  cursor: default; 
+  transition: box-shadow 0.2s ease;
 }
 
 .shirt-item img {
-  width: 100%;
-  border-radius: 8px;
+  width: 100%;
+  border-radius: 8px;
+  min-height: 300px; 
+  background-color: #475569;
+}
+
+.shirt-item p {
+  color: #f1f5f9;
 }
 
 .shirt-item:hover {
-  transform: scale(1.07);
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  transform: none;
+  box-shadow: none;
 }
 
 .shirt-item.selected {
-  border: 3px solid #38bdf8;
-  box-shadow: 0 0 12px #38bdf8;
+  border: 3px solid #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
 }
 
 .nav-btn {
