@@ -1,6 +1,4 @@
-// =========================
-// CONFIG GERAL DA API
-// =========================
+
 const API_BASE_URL = 'https://provador-virtual-backend.onrender.com';
 const API_UPLOAD_ENDPOINT = API_BASE_URL + '/api/upload';
 
