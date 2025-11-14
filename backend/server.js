@@ -1,81 +1,134 @@
-// server.js
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import Replicate from "replicate";
-import 'dotenv/config';
+import express from "express";
+import cors from "cors";
+import multer from "multer";
+import dotenv from "dotenv";
+import fetch from "node-fetch"; 
+
+dotenv.config();
+console.log("REPLICATE_TOKEN_LOADED:", !!process.env.REPLICATE_API_TOKEN);
 
 const app = express();
-const port = process.env.PORT || 5000;
+const upload = multer({ storage: multer.memoryStorage() });
 
-app.use(cors({ origin: "*" }));
+app.use(cors());
 app.use(express.json());
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024 }
+const uploads = {};
+const tasks = {};
+
+app.post("/api/upload", upload.single("file"), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado." });
+
+  const fakeId = "id_" + Math.random().toString(36).substring(2, 10);
+  uploads[fakeId] = {
+    buffer: req.file.buffer,
+    type: req.body.type || "unknown",
+    filename: req.file.originalname,
+  };
+
+  console.log(`🟢 Upload recebido (${req.body.type}): ${req.file.originalname}`);
+  res.json({ id: fakeId });
 });
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN
-});
-
-app.post("/api/upload", upload.fields([
-  { name: "model_image", maxCount: 1 },
-  { name: "garment_image", maxCount: 1 }
-]), async (req, res) => {
-
+app.post("/api/tryon", async (req, res) => {
   try {
-    if (!req.files?.model_image || !req.files?.garment_image) {
-      return res.status(400).json({ error: "Envie model_image e garment_image." });
+    const { person_id, cloth_id, task_id } = req.body;
+
+    if (task_id && tasks[task_id]) {
+      const task = tasks[task_id];
+      return res.json(task);
     }
 
-    // Convertendo para base64 data URI
-    const toDataURI = (file) =>
-      `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+    if (!uploads[person_id] || !uploads[cloth_id]) {
+      return res.status(400).json({ error: "IDs inválidos de pessoa ou roupa." });
+    }
 
-    const modelImage = toDataURI(req.files.model_image[0]);
-    const garmentImage = toDataURI(req.files.garment_image[0]);
+    console.log("Enviando imagens para Replicate...");
 
-    console.log("Chamando modelo omnious/vella-1.5...");
+    const LATEST_VELLA_VERSION_ID =
+      "15411671930948c2d20b81fa41e1af6075f6181b2e38477bdd3526d50affe4a9";
 
-    // CHAMADA CORRETA — sem version
-    const output = await replicate.run(
-      "omnious/vella-1.5",
-      {
+    const predictionResponse = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        version: LATEST_VELLA_VERSION_ID,
         input: {
-          model_image: modelImage,
-          bottom_image: garmentImage
-        }
-      }
-    );
+          model_image: `data:${uploads[person_id].type};base64,${uploads[
+            person_id
+          ].buffer.toString("base64")}`,
+          top_image: `data:${uploads[cloth_id].type};base64,${uploads[
+            cloth_id
+          ].buffer.toString("base64")}`,
+        },
+      }),
+    });
 
-    let resultUrl = null;
-
-    // Output pode ser array de objetos
-    if (Array.isArray(output) && output[0]?.url) {
-      resultUrl = output[0].url;
-    } else if (Array.isArray(output) && typeof output[0] === "string") {
-      resultUrl = output[0];
-    } else if (output?.url) {
-      resultUrl = output.url;
-    }
-
-    if (!resultUrl) {
+    if (!predictionResponse.ok) {
+      const errText = await predictionResponse.text();
+      console.error("Erro ao criar predição:", errText);
       return res.status(500).json({
-        error: "Não foi possível extrair URL da imagem gerada.",
-        output
+        error:
+          "Erro ao criar predição no Replicate. Verifique se o token está correto ou se há créditos suficientes.",
       });
     }
 
-    return res.json({ result_url: resultUrl });
+    let prediction = await predictionResponse.json();
 
-  } catch (err) {
-    console.error("Erro no backend:", err);
-    return res.status(500).json({ error: "Erro interno", details: err.message });
+    if (!prediction.urls || !prediction.urls.get) {
+      console.error("Resposta inesperada do Replicate:", prediction);
+      return res.status(500).json({
+        error: "Resposta inesperada do Replicate. Verifique o modelo usado.",
+      });
+    }
+
+    console.log("Aguardando processamento do modelo...");
+    while (prediction.status !== "succeeded" && prediction.status !== "failed") {
+      console.log("Status atual:", prediction.status);
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const statusRes = await fetch(prediction.urls.get, {
+        headers: { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` },
+      });
+      prediction = await statusRes.json();
+    }
+
+    if (prediction.status === "succeeded") {
+      const imageUrl = Array.isArray(prediction.output)
+        ? prediction.output[0]
+        : prediction.output;
+
+      console.log("✅ Imagem gerada com sucesso Aninhaa!");
+      console.log("URL de Resultado:", imageUrl);
+
+      const newTaskId = "task_" + Math.random().toString(36).substring(2, 10);
+      tasks[newTaskId] = {
+        task_id: newTaskId,
+        status: "COMPLETED",
+        result_url: imageUrl,
+      };
+
+      return res.json(tasks[newTaskId]);
+    } else {
+      console.error("Falha na geração:", prediction.error);
+      return res.status(500).json({
+        error:
+          "O modelo falhou ao gerar a imagem. Pode ser incompatibilidade da imagem, formato incorreto ou erro interno do Replicate.",
+      });
+    }
+  } catch (error) {
+    console.error("Erro Replicate:", error);
+    res.status(500).json({
+      error:
+        "Falha na integração com Replicate: " +
+        (error.message || "Erro desconhecido."),
+    });
   }
 });
 
-app.listen(port, () => {
-  console.log(`Backend rodando na porta ${port}`);
-});
+const PORT = 5000;
+app.listen(PORT, () =>
+  console.log(`✅ Backend com Replicate rodando em http://localhost:${PORT}`)
+);
