@@ -109,10 +109,9 @@ button:disabled {
   width: 200px;
   height: 200px; 
   display: flex; 
-  flex-direction: column; 
+  flex-direction: column;
   justify-content: center; 
   align-items: center; 
-  
   background: #334155;
   border-radius: 12px;
   padding: 10px;
@@ -123,11 +122,11 @@ button:disabled {
 }
 
 .shirt-item img {
-  width: 90%;
+  width: 90%; 
   max-height: 90%; 
   object-fit: contain; 
   border-radius: 8px;
-  background-color: transparent;
+  background-color: transparent; 
   margin-bottom: 5px; 
 }
 
