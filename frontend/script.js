@@ -125,16 +125,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Selecionar camisa
-  shirtItems.forEach((item, idx) => {
-    item.addEventListener('click', async () => {
-      shirtItems.forEach(i => i.classList.remove('selected'));
-      item.classList.add('selected');
-      currentIndex = idx;
+ shirtItems.forEach((item, idx) => {
+    item.addEventListener('click', async () => {
+      shirtItems.forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+      currentIndex = idx;
 
-      selectedGarmentFile = true; // apenas indica que escolheu
-      checkReadyToTryOn();
-    });
-  });
+      const shirtURL = item.querySelector('img').src;
+      
+      try {
+        const response = await fetch(shirtURL);
+        const blob = await response.blob();
+        
+        selectedGarmentFile = new File([blob], "camisa.png", { type: blob.type });
+        
+        checkReadyToTryOn();
+      
+      } catch (error) {
+        console.error("Erro ao carregar a imagem da camisa:", error);
+        alert("Não foi possível carregar esta camisa.");
+        selectedGarmentFile = null;
+      }
+    });
+  });
 
 
   // ---------- Upload da pessoa ----------
