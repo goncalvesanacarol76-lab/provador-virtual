@@ -11,7 +11,6 @@ const port = process.env.PORT || 5000;
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// Upload em memória
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 8 * 1024 * 1024 }
