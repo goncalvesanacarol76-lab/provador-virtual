@@ -99,7 +99,7 @@ app.post(
 
       console.log("🕒 Aguardando geração da IA...");
 
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 90; i++) {
         await new Promise((r) => setTimeout(r, 2000));
 
         const pollResp = await fetch(getUrl, {
