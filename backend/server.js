@@ -7,152 +7,135 @@ import "dotenv/config";
 const app = express();
 const port = process.env.PORT || 5000;
 
+// modelo correto catvton-flux
 const REPLICATE_VERSION_ID =
-  "cf5cb07a25e726fe2fac166a8c5ab52ddccd48657741670fb09d9954d4d8446f"; // Modelo novo FLUX TRY-ON
+  "cc41d1b963023987ed2ddf26e9264efcc96ee076640115c303f95b0010f6a958";
 
-// --- MIDDLEWARES ---
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// ------------------------------------------------------
-//                 ROTA DE UPLOAD
-// ------------------------------------------------------
 app.post(
   "/api/upload",
   upload.fields([
-    { name: "model_image", maxCount: 1 }, // Foto da pessoa (frontend)
-    { name: "garment_image", maxCount: 1 } // Foto da roupa (frontend)
+    { name: "model_image", maxCount: 1 },   // pessoa
+    { name: "garment_image", maxCount: 1 }  // roupa
   ]),
   async (req, res) => {
     console.log("🟢 Requisição recebida em /api/upload");
 
     try {
-      // 1. Verificar token
+      // tokens obrigatórios
       if (!process.env.REPLICATE_API_TOKEN) {
-        console.error("ERRO: REPLICATE_API_TOKEN não configurada.");
-        return res
-          .status(500)
-          .json({ error: "REPLICATE_API_TOKEN não configurada no Render." });
+        return res.status(500).json({ error: "Falta REPLICATE_API_TOKEN" });
+      }
+      if (!process.env.HF_TOKEN) {
+        return res.status(500).json({ error: "Falta HF_TOKEN do HuggingFace" });
       }
 
-      // 2. Verificação de arquivos
-      if (
-        !req.files ||
-        !req.files.model_image ||
-        !req.files.garment_image
-      ) {
+      // arquivos obrigatórios
+      if (!req.files.model_image || !req.files.garment_image) {
         return res.status(400).json({
           error: "Envie 'model_image' (pessoa) e 'garment_image' (roupa)."
         });
       }
 
       const personFile = req.files.model_image[0];
-      const clothFile = req.files.garment_image[0];
+      const garmentFile = req.files.garment_image[0];
 
-      // 3. Converter para Base64
-      const base64Person = `data:${personFile.mimetype};base64,${personFile.buffer.toString(
-        "base64"
-      )}`;
-      const base64Cloth = `data:${clothFile.mimetype};base64,${clothFile.buffer.toString(
-        "base64"
-      )}`;
+      const base64Person = `data:${personFile.mimetype};base64,${personFile.buffer.toString("base64")}`;
+      const base64Garment = `data:${garmentFile.mimetype};base64,${garmentFile.buffer.toString("base64")}`;
 
-      console.log("Imagens convertidas. Enviando para o Replicate...");
+      console.log("📤 Enviando imagens para Replicate...");
 
-      // 4. Criar predição no Replicate
-      const createResp = await fetch(
-        "https://api.replicate.com/v1/predictions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            version: REPLICATE_VERSION_ID,
-            input: {
-              person_image: base64Person, // Nomes corretos do novo modelo
-              clothing_image: base64Cloth
-            }
-          })
-        }
-      );
+      // criar a prediction
+      const createResp = await fetch("https://api.replicate.com/v1/predictions", {
+        method: "POST",
+        headers: {
+          Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          version: REPLICATE_VERSION_ID,
+          input: {
+            hf_token: process.env.HF_TOKEN, // obrigatório!!!
+            image: base64Person,
+            garment: base64Garment,
+            try_on: true
+          }
+        })
+      });
 
       const createJson = await createResp.json();
 
       if (!createResp.ok) {
-        console.error("❌ ERRO AO CRIAR PREDICTION:", createJson);
-        return res.status(createResp.status).json({
-          error: createJson.detail || "Erro criando prediction no Replicate.",
+        console.log("❌ Erro ao criar prediction:", createJson);
+        return res.status(500).json({
+          error: createJson.detail || "Erro criando prediction.",
           details: createJson
         });
       }
 
-      // 5. Polling para esperar o resultado
-      let finalOutput = null;
-      const getUrl = createJson.urls?.get;
+      const getUrl = createJson.urls.get;
 
-      console.log("🕒 Aguardando geração da IA...");
+      console.log("⏳ Aguardando resultado...");
+
+      let output = null;
 
       for (let i = 0; i < 90; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const pollResp = await fetch(getUrl, {
-          headers: { Authorization: `Token ${process.env.REPLICATE_API_TOKEN}` }
+          headers: {
+            Authorization: `Token ${process.env.REPLICATE_API_TOKEN}`
+          }
         });
 
         const pollJson = await pollResp.json();
 
-        console.log(`⏳ Status: ${pollJson.status} (${i + 1}/40)`);
+        console.log(`Status: ${pollJson.status} (${i + 1}/90)`);
 
         if (pollJson.status === "succeeded") {
-          finalOutput = pollJson.output;
+          output = pollJson.output[0];
           break;
         }
 
         if (pollJson.status === "failed") {
-          console.error("❌ Falhou:", pollJson);
           return res.status(500).json({
-            error: "Falha no modelo do Replicate.",
+            error: "Falha do modelo",
             details: pollJson
           });
         }
       }
 
-      if (!finalOutput) {
+      if (!output) {
         return res.status(504).json({
-          error: "Timeout esperando resposta da IA."
+          error: "Timeout esperando resposta do modelo"
         });
       }
 
-      console.log("✅ Sucesso! Resultado enviado ao frontend.");
-      return res.json({ result_url: finalOutput });
+      console.log("✅ Sucesso! Enviando resultado ao frontend.");
+
+      res.json({ result_url: output });
 
     } catch (err) {
-      console.error("🔴 ERRO FATAL:", err);
-      return res.status(500).json({
-        error: "Erro interno do servidor.",
+      console.error("🔥 ERRO FATAL:", err);
+      res.status(500).json({
+        error: "Erro interno",
         details: err.message
       });
     }
   }
 );
 
-// ------------------------------------------------------
-//                   ROTA STATUS
-// ------------------------------------------------------
 app.get("/", (req, res) => {
-  res.send("Backend do Provador Virtual está funcionando!");
+  res.send("Backend funcionando com catvton-flux!");
 });
 
-// ------------------------------------------------------
-//              INICIAR SERVIDOR
-// ------------------------------------------------------
 app.listen(port, () => {
-  console.log(`🚀 Backend rodando na porta ${port}`);
+  console.log(`🚀 Servidor rodando na porta ${port}`);
 });
