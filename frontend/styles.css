@@ -6,7 +6,7 @@ body {
     color: #f1f5f9;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: flex-start; 
     min-height: 100vh;
     margin: 0;
     padding: 30px 20px;
@@ -15,17 +15,16 @@ body {
 .container {
     background: #1e293b;
     border-radius: 20px;
-    padding: 20px;
+    padding: 25px;
     width: 100%;
     max-width: 480px;
     box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
     text-align: center;
-    transition: all 0.3s ease;
 }
 
 h1 {
-    margin-top: 5px;
-    margin-bottom: 20px;
+    margin-top: 0;
+    margin-bottom: 25px; 
     color: #38bdf8;
     font-size: 1.6rem;
 }
@@ -40,16 +39,18 @@ label {
     font-weight: 600;
     color: #93c5fd;
     font-size: 0.9rem;
-    margin-top: 8px;
+    margin-top: 15px; 
+    display: block;
+    text-align: center;
 }
 
 .upload-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    padding-top: 15px;
+    gap: 15px;
+    margin-bottom: 30px; 
+    padding-top: 20px;
     border-top: 1px solid #334155;
 }
 
@@ -57,21 +58,35 @@ label {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     width: 100%;
 }
 
 input[type="file"] {
     width: 80%;
+    max-width: 300px; 
     background: #334155;
     border: 1px solid #475569;
     padding: 10px;
     border-radius: 10px;
     color: #f1f5f9;
     cursor: pointer;
+    margin: 0; 
+    text-align: left;
+}
+
+
+.button-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px; 
+    margin-top: 5px;
+    width: 100%;
 }
 
 button {
+    min-width: 150px; 
     display: inline-block;
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     border: none;
@@ -82,8 +97,12 @@ button {
     cursor: pointer;
     transition: 0.3s ease;
     font-size: 1rem;
-    margin: 10px 5px 0;
+    margin: 5px 0;
     text-align: center;
+}
+
+button#tryonBtn {
+    margin-top: 25px; 
 }
 
 button:hover {
@@ -96,16 +115,9 @@ button:disabled {
     cursor: not-allowed;
 }
 
-.button-group {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 10px; /* Espaço uniforme entre botões */
-}
-
 .shirt-selector {
     text-align: center;
-    margin: 15px 0 25px;
+    margin: 10px 0 25px; /* Margens ajustadas para compactar com o título h1 */
 }
 
 .carousel-container.simplified .carousel {
@@ -127,9 +139,10 @@ button:disabled {
     border-radius: 12px;
     padding: 10px;
     cursor: default;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
     border: 3px solid #475569;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    /* Mantém o efeito de brilho suave e transições */
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .shirt-item img {
@@ -159,13 +172,13 @@ button:disabled {
     height: auto;
     object-fit: cover;
     border-radius: 12px;
-    margin-top: 12px;
+    margin-top: 15px; 
     box-shadow: 0 0 12px rgba(15, 23, 42, 0.7);
 }
 
 #progress-container {
     width: 100%;
-    margin: 15px 0;
+    margin: 20px 0;
     text-align: center;
 }
 
@@ -193,10 +206,9 @@ button:disabled {
     100% { transform: translateX(100%); width: 10%; }
 }
 
-
 .result {
     text-align: center;
-    margin-top: 25px;
+    margin-top: 35px; 
     width: 100%;
     overflow: hidden;
     padding-bottom: 20px;
@@ -205,11 +217,11 @@ button:disabled {
 .results-grid {
     display: flex;
     gap: 20px;
-    padding: 10px 0;
-    justify-content: center; /* centraliza os itens */
-    overflow-x: auto; /* permite rolagem horizontal */
+    padding: 10px 20px; 
+    justify-content: flex-start; /* Alinha no início */
+    overflow-x: scroll; /* Permite a rolagem */
     scroll-snap-type: x mandatory;
-    scrollbar-width: thin; /* barra fina no Firefox */
+    scrollbar-width: thin; 
     scrollbar-color: #38bdf8 #334155;
 }
 
@@ -235,12 +247,12 @@ button:disabled {
     flex-shrink: 0;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
     border: 1px solid #334155;
-    scroll-snap-align: center; 
+    scroll-snap-align: start; 
     transition: transform 0.2s ease;
 }
 
 .result-block:hover {
-    transform: scale(1.05);
+    transform: scale(1.02); 
 }
 
 .result-block h3 {
