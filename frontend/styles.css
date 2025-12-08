@@ -2,45 +2,62 @@
 
 body {
     font-family: 'Poppins', sans-serif;
+    /* Fundo gradiente escuro */
     background: linear-gradient(145deg, #0a0f1f, #0f172a); 
     color: #f1f5f9; /* Texto claro */
     display: flex;
     justify-content: center;
-    align-items: center;
+    /* Alinhar ao topo, não ao centro, para evitar espaçamento excessivo em telas grandes */
+    align-items: flex-start; 
     min-height: 100vh;
     margin: 0;
-    padding: 20px;
+    /* Reduz o padding para compactar o layout */
+    padding: 30px 20px; 
 }
 
 .container {
-    background: #1e293b;
+    background: #1e293b; /* Fundo do container (Azul escuro sutil) */
     border-radius: 20px;
-    padding: 25px;
+    /* Reduz o padding para compactar elementos internos */
+    padding: 20px; 
     width: 100%;
-    max-width: 480px; 
+    max-width: 480px; /* Largura máxima para centralizar */
+    /* Sombra neon sutil */
     box-shadow: 0 0 25px rgba(56, 189, 248, 0.15); 
     text-align: center;
     transition: all 0.3s ease;
 }
 
+/* --- TÍTULOS E COMPONENTES GERAIS --- */
 h1 {
-    margin-bottom: 20px;
+    margin-top: 5px; /* Reduz margem superior do título principal */
+    margin-bottom: 25px;
     color: #38bdf8;
     font-size: 1.6rem;
 }
 
-label {
-    font-weight: 600;
-    color: #93c5fd; 
-    font-size: 0.9rem;
+h2 {
+    font-size: 1.2rem;
+    color: #93c5fd;
+    margin-bottom: 10px;
 }
 
+label {
+    font-weight: 600;
+    color: #93c5fd;
+    font-size: 0.9rem;
+    margin-top: 10px; /* Adiciona um pequeno espaçamento acima do label */
+}
+
+/* --- UPLOAD E CÂMERA --- */
 .upload-section {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 15px;
+    flex-direction: column; /* Coloca os elementos em coluna para melhor organização */
+    align-items: center;
+    gap: 10px;
     margin-bottom: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #334155;
 }
 
 .upload-box {
@@ -48,9 +65,11 @@ label {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    width: 100%; /* Ocupa a largura total da seção */
 }
 
 input[type="file"] {
+    width: 80%; /* Ajusta a largura do input de arquivo */
     background: #334155;
     border: 1px solid #475569;
     padding: 10px;
@@ -59,18 +78,7 @@ input[type="file"] {
     cursor: pointer;
 }
 
-.preview-img, #cameraPreview {
-    max-width: 220px;
-    max-height: 260px;
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    border-radius: 12px;
-    margin-top: 10px;
-    /* Sombra sutil para destacar a prévia */
-    box-shadow: 0 0 12px rgba(15, 23, 42, 0.7); 
-}
-
+/* --- BOTÕES --- */
 button {
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     border: none;
@@ -81,10 +89,11 @@ button {
     cursor: pointer;
     transition: 0.3s ease;
     font-size: 1rem;
+    margin-top: 15px; /* Adiciona margem acima do botão principal */
 }
 
 button:hover {
-    transform: scale(1.03); /* Suavizei o scale de 1.05 para 1.03 */
+    transform: scale(1.03);
     background: linear-gradient(135deg, #0ea5e9, #0284c7);
 }
 
@@ -93,16 +102,10 @@ button:disabled {
     cursor: not-allowed;
 }
 
+/* --- CARROSSEL DE CAMISAS (Input) --- */
 .shirt-selector {
     text-align: center;
-    margin: 30px 0 40px;
-}
-
-.carousel-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin: 20px 0 30px; /* Reduz o espaçamento */
 }
 
 .carousel-container.simplified .carousel {
@@ -114,6 +117,7 @@ button:disabled {
 .carousel {
     display: flex;
     padding: 10px;
+    justify-content: center; /* Centraliza a camisa */
 }
 
 .shirt-item {
@@ -139,6 +143,8 @@ button:disabled {
 
 .shirt-item p {
     color: #f1f5f9;
+    margin-top: 5px; /* Compacta o texto */
+    font-size: 0.9em;
 }
 
 .shirt-item.selected {
@@ -146,66 +152,19 @@ button:disabled {
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
 }
 
-.result {
-    text-align: center;
-    margin-top: 30px;
-    /* Ajuste para garantir que a rolagem funcione dentro da div */
-    width: 100%; 
-    overflow: hidden; 
-}
-
-.results-grid {
-    display: flex;
-    gap: 20px;
-    padding: 10px 0;
-    justify-content: flex-start;
-    overflow-x: scroll; 
-    scrollbar-width: none; 
-    -ms-overflow-style: none;
-}
-.results-grid::-webkit-scrollbar {
-    display: none;
-}
-
-.result-block {
-    background: #293444; 
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-    min-width: 250px;
-    flex-shrink: 0;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-    border: 1px solid #334155;
-}
-
-.result-block h3 {
-    font-size: 1.1em;
-    color: #38bdf8;
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-.result-image {
+/* --- PRÉVIAS --- */
+.preview-img, #cameraPreview {
+    max-width: 220px;
+    max-height: 260px;
     width: 100%;
     height: auto;
-    max-height: 250px;
-    object-fit: contain;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    background-color: #475569;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-top: 15px; /* Ajusta margem para separação */
+    box-shadow: 0 0 12px rgba(15, 23, 42, 0.7);
 }
 
-.result-block .downloadSingle {
-    padding: 8px 15px;
-    font-size: 0.9em;
-    width: 100%;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.hidden {
-    display: none !important;
-}
-
+/* --- PROGRESSO --- */
 #progress-container {
     width: 100%;
     margin: 20px 0;
@@ -234,4 +193,74 @@ button:disabled {
     0% { transform: translateX(-100%); width: 10%; }
     50% { transform: translateX(0%); width: 100%; }
     100% { transform: translateX(100%); width: 10%; }
+}
+
+/* --- RESULTADOS DA IA (O CARROSSEL HORIZONTAL) --- */
+.result {
+    text-align: center;
+    margin-top: 30px;
+    width: 100%; 
+    overflow: hidden; 
+    padding-bottom: 20px; /* Espaçamento extra no final da seção */
+}
+
+.results-grid {
+    /* CHAVE 1: Usa Flexbox para colocar itens lado a lado */
+    display: flex;
+    gap: 20px;
+    padding: 10px 0;
+    justify-content: flex-start; 
+    /* CHAVE 2: Permite a rolagem horizontal */
+    overflow-x: scroll; 
+    /* Garante rolagem suave (opcional, mas bom) */
+    scroll-snap-type: x mandatory; 
+    
+    /* Remove a barra de rolagem (deixa o carrossel mais limpo, mas ainda rolável) */
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+}
+.results-grid::-webkit-scrollbar {
+    display: none;
+}
+
+.result-block {
+    background: #293444; 
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 250px; /* Largura mínima para o cartão */
+    flex-shrink: 0; /* IMPEDE QUE O ITEM ENCOLHA */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+    border: 1px solid #334155;
+    /* Ajuste para que o scroll-snap funcione */
+    scroll-snap-align: start; 
+}
+
+.result-block h3 {
+    font-size: 1.1em;
+    color: #38bdf8;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.result-image {
+    width: 100%;
+    height: auto;
+    max-height: 250px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background-color: #475569;
+}
+
+.result-block .downloadSingle {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    width: 100%;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* --- UTILS --- */
+.hidden {
+    display: none !important;
 }
