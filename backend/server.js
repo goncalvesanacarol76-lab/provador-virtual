@@ -7,22 +7,18 @@ import "dotenv/config";
 const app = express();
 const port = process.env.PORT || 5000;
 
-// ✅ ID correto do modelo catvton-flux
 const REPLICATE_VERSION_ID =
-  "cc41d1b963023987ed2ddf26e9264efcc96ee076640115c303f95b0010f6a958";
+  "dfda793f95fb788961b38ce72978a350cd7b689c17bbfeb7e1048fc9c7c4849d";
 
-// --- MIDDLEWARES ---
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // limite 10MB
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-// ------------------------------------------------------
-//                   ROTA DE UPLOAD
-// ------------------------------------------------------
+
 app.post(
   "/api/upload",
   upload.fields([
@@ -33,15 +29,10 @@ app.post(
     console.log("🟢 Requisição recebida em /api/upload");
 
     try {
-      // Tokens obrigatórios
       if (!process.env.REPLICATE_API_TOKEN) {
         return res.status(500).json({ error: "Falta REPLICATE_API_TOKEN" });
       }
-      if (!process.env.HF_TOKEN) {
-        return res.status(500).json({ error: "Falta HF_TOKEN do HuggingFace" });
-      }
 
-      // Verificar arquivos
       if (!req.files.model_image || !req.files.garment_image) {
         return res.status(400).json({
           error: "Envie 'model_image' (pessoa) e 'garment_image' (roupa)."
@@ -51,11 +42,10 @@ app.post(
       const personFile = req.files.model_image[0];
       const garmentFile = req.files.garment_image[0];
 
-      // Converter para Base64
       const base64Person = `data:${personFile.mimetype};base64,${personFile.buffer.toString("base64")}`;
       const base64Garment = `data:${garmentFile.mimetype};base64,${garmentFile.buffer.toString("base64")}`;
 
-      console.log("📤 Enviando imagens para o modelo catvton-flux...");
+      console.log("📤 Enviando imagens para oot_diffusion_dc...");
 
       // Criar prediction no Replicate
       const createResp = await fetch("https://api.replicate.com/v1/predictions", {
@@ -67,10 +57,12 @@ app.post(
         body: JSON.stringify({
           version: REPLICATE_VERSION_ID,
           input: {
-            hf_token: process.env.HF_TOKEN,
-            image: base64Person,
-            garment: base64Garment,
-            try_on: true
+            seed: 0,
+            steps: 15,
+            guidance_scale: 2,
+            garment_category: "upperbody", // ou lowerbody — você escolhe
+            model_image: base64Person,
+            garment_image: base64Garment
           }
         })
       });
@@ -89,9 +81,9 @@ app.post(
 
       console.log("⏳ Aguardando geração do resultado...");
 
-      let output = null;
+      let outputImages = null;
 
-      // Polling — até 90 tentativas
+      // Polling — aguarda resultado
       for (let i = 0; i < 90; i++) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -104,7 +96,7 @@ app.post(
         console.log(`Status: ${pollJson.status} (${i + 1}/90)`);
 
         if (pollJson.status === "succeeded") {
-          output = pollJson.output[0];
+          outputImages = pollJson.output; // Esse modelo retorna 4 imagens
           break;
         }
 
@@ -117,7 +109,7 @@ app.post(
         }
       }
 
-      if (!output) {
+      if (!outputImages) {
         return res.status(504).json({
           error: "Timeout esperando resposta da IA"
         });
@@ -125,7 +117,7 @@ app.post(
 
       console.log("✅ Sucesso! Enviando resultado ao frontend.");
 
-      res.json({ result_url: output });
+      res.json({ result_urls: outputImages });
 
     } catch (err) {
       console.error("🔥 ERRO FATAL:", err);
@@ -137,16 +129,11 @@ app.post(
   }
 );
 
-// ------------------------------------------------------
-//                   ROTA STATUS
-// ------------------------------------------------------
+
 app.get("/", (req, res) => {
-  res.send("Backend funcionando com catvton-flux!");
+  res.send("Backend rodando com oot_diffusion_dc!");
 });
 
-// ------------------------------------------------------
-//                   START SERVER
-// ------------------------------------------------------
 app.listen(port, () => {
   console.log(`🚀 Servidor rodando na porta ${port}`);
 });
