@@ -128,12 +128,15 @@ button:disabled {
     justify-content: center;
     overflow: visible;
     width: auto;
+    align-items: center; 
+    display: flex;
 }
 
 .carousel {
     display: flex;
     padding: 10px;
     justify-content: center;
+    align
 }
 
 .shirt-item {
