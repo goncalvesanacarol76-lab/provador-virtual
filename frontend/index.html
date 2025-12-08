@@ -1,68 +1,61 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css?v=10">
-  <title>Provador Virtual Fanáticos FC</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css?v=10">
+  <title>Provador Virtual Fanáticos FC</title>
 </head>
 <body>
-  <div class="container">
-    <h1>Provador Virtual Fanáticos FC</h1>
+  <div class="container">
+    <h1>Provador Virtual Fanáticos FC</h1>
 
-    <!-- CAMISA SELECIONADA -->
-    <section class="shirt-selector">
-      <h2>Camisa selecionada para o teste:</h2>
-      
-      <div class="carousel-container simplified"> 
-        <div class="carousel" id="shirtCarousel">
-        
-          <div class="shirt-item selected" data-src="">
-            <img src="" alt="Camisa Carregando...">
-            <p>Carregando...</p>
-          </div>
+        <section class="shirt-selector">
+      <h2>Camisa selecionada para o teste:</h2>
+      
+      <div class="carousel-container simplified"> 
+        <div class="carousel" id="shirtCarousel">
+        
+          <div class="shirt-item selected" data-src="">
+            <img src="" alt="Camisa Carregando...">
+            <p>Carregando...</p>
+          </div>
 
-        </div>
-      </div>
-    </section>
+        </div>
+      </div>
+    </section>
 
-    <!-- UPLOAD DA FOTO -->
-    <div class="upload-section">
-      <div class="upload-box">
-        <label for="personInput">Envie sua foto:</label>
-        <input type="file" id="personInput" accept="image/*" capture="environment" />
+        <div class="upload-section">
+      <div class="upload-box">
+        <label for="personInput">Envie sua foto:</label>
+        <input type="file" id="personInput" accept="image/*" capture="environment" />
 
-        <button id="openCameraBtn">Tirar Foto</button>
+        <button id="openCameraBtn">Tirar Foto</button>
 
-        <video id="cameraPreview" autoplay class="hidden"></video>
-        <button id="captureBtn" class="hidden">Capturar</button>
+        <video id="cameraPreview" autoplay class="hidden"></video>
+        <button id="captureBtn" class="hidden">Capturar</button>
 
-        <img id="personPreview" src="" alt="Prévia da pessoa" class="hidden preview-img">
-      </div>
-    </div>
+        <img id="personPreview" src="" alt="Prévia da pessoa" class="hidden preview-img">
+      </div>
+    </div>
 
-    <!-- BOTÃO -->
-    <button id="tryonBtn" disabled>Testar roupa</button>
+        <button id="tryonBtn" disabled>Testar roupa</button>
 
-    <!-- BARRA DE PROGRESSO -->
-    <div id="progress-container" class="hidden">
-      <div class="progress-bar"></div>
-      <p>Gerando imagem com IA...</p>
-    </div>
+        <div id="progress-container" class="hidden">
+      <div class="progress-bar"></div>
+      <p>Gerando imagem com IA...</p>
+    </div>
 
-    <!-- STATUS -->
-    <p id="status-message" class="hidden"></p>
+        <p id="status-message" class="hidden"></p>
 
-    <!-- RESULTADOS (4 IMAGENS) -->
-    <div id="result" class="result hidden">
-      <h2>Resultado do Provador</h2>
+        <div id="result" class="result hidden">
+      <h2>Resultado do Provador</h2>
 
-      <div id="resultsContainer" class="results-grid"></div>
-    </div>
+      <div id="resultsContainer" class="results-grid"></div>
+    </div>
 
-  </div>
+  </div>
 
-  <!-- SCRIPT -->
-  <script src="script.js?v=10"></script>
+    <script src="script.js?v=10"></script>
 </body>
 </html>
