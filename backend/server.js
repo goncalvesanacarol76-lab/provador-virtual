@@ -8,7 +8,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const REPLICATE_VERSION_ID =
-  "dfda793f95fb788961b38ce72978a350cd7b689c17bbfeb7e1048fc9c7c4849d";
+  "dfda793f95fb788961b38ce72978ce72978a350cd7b689c17bbfeb7e1048fc9c7c4849d";
 
 app.use(cors({ origin: "*" }));
 app.use(express.json());
@@ -46,7 +46,6 @@ app.post(
 
       console.log("📤 Enviando imagens para oot_diffusion_dc...");
 
-      // Criar prediction no Replicate
       const createResp = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
         headers: {
@@ -80,9 +79,8 @@ app.post(
 
       console.log("⏳ Aguardando geração do resultado...");
 
-      let finalImageUrl = null;
+      let finalImages = null;
 
-      // Polling — espera o resultado
       for (let i = 0; i < 90; i++) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -91,21 +89,10 @@ app.post(
         });
 
         const pollJson = await pollResp.json();
-
         console.log(`Status: ${pollJson.status} (${i + 1}/90)`);
 
         if (pollJson.status === "succeeded") {
-          const output = pollJson.output;
-
-          if (!output || !output.image) {
-            console.log("❌ Output inválido:", output);
-            return res.status(500).json({
-              error: "A IA não retornou a imagem final.",
-              details: output
-            });
-          }
-
-          finalImageUrl = output.image;
+          finalImages = pollJson.output; // É um array de imagens
           break;
         }
 
@@ -118,14 +105,12 @@ app.post(
         }
       }
 
-      if (!finalImageUrl) {
-        return res.status(504).json({
-          error: "Timeout esperando resposta da IA"
-        });
+      if (!finalImages) {
+        return res.status(504).json({ error: "Timeout esperando resposta da IA" });
       }
 
       console.log("✅ Sucesso! Enviando resultado ao frontend.");
-      res.json({ image_url: finalImageUrl });
+      res.json({ result_urls: finalImages }); // <- aqui retorna um array
 
     } catch (err) {
       console.error("🔥 ERRO FATAL:", err);
