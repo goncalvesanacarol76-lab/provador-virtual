@@ -2,36 +2,30 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    /* Fundo gradiente escuro */
     background: linear-gradient(145deg, #0a0f1f, #0f172a); 
-    color: #f1f5f9; /* Texto claro */
+    color: #f1f5f9;
     display: flex;
     justify-content: center;
-    /* Alinhar ao topo, não ao centro, para evitar espaçamento excessivo em telas grandes */
-    align-items: flex-start; 
+    align-items: flex-start;
     min-height: 100vh;
     margin: 0;
-    /* Reduz o padding para compactar o layout */
-    padding: 30px 20px; 
+    padding: 30px 20px;
 }
 
 .container {
-    background: #1e293b; /* Fundo do container (Azul escuro sutil) */
+    background: #1e293b;
     border-radius: 20px;
-    /* Reduz o padding para compactar elementos internos */
-    padding: 20px; 
+    padding: 20px;
     width: 100%;
-    max-width: 480px; /* Largura máxima para centralizar */
-    /* Sombra neon sutil */
-    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15); 
+    max-width: 480px;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
     text-align: center;
     transition: all 0.3s ease;
 }
 
-/* --- TÍTULOS E COMPONENTES GERAIS --- */
 h1 {
-    margin-top: 5px; /* Reduz margem superior do título principal */
-    margin-bottom: 25px;
+    margin-top: 5px;
+    margin-bottom: 20px;
     color: #38bdf8;
     font-size: 1.6rem;
 }
@@ -46,16 +40,15 @@ label {
     font-weight: 600;
     color: #93c5fd;
     font-size: 0.9rem;
-    margin-top: 10px; /* Adiciona um pequeno espaçamento acima do label */
+    margin-top: 8px;
 }
 
-/* --- UPLOAD E CÂMERA --- */
 .upload-section {
     display: flex;
-    flex-direction: column; /* Coloca os elementos em coluna para melhor organização */
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 25px;
+    gap: 8px;
+    margin-bottom: 20px;
     padding-top: 15px;
     border-top: 1px solid #334155;
 }
@@ -64,12 +57,12 @@ label {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    width: 100%; /* Ocupa a largura total da seção */
+    gap: 6px;
+    width: 100%;
 }
 
 input[type="file"] {
-    width: 80%; /* Ajusta a largura do input de arquivo */
+    width: 80%;
     background: #334155;
     border: 1px solid #475569;
     padding: 10px;
@@ -78,8 +71,8 @@ input[type="file"] {
     cursor: pointer;
 }
 
-/* --- BOTÕES --- */
 button {
+    display: inline-block;
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
     border: none;
     padding: 12px 25px;
@@ -89,7 +82,8 @@ button {
     cursor: pointer;
     transition: 0.3s ease;
     font-size: 1rem;
-    margin-top: 15px; /* Adiciona margem acima do botão principal */
+    margin: 10px 5px 0;
+    text-align: center;
 }
 
 button:hover {
@@ -102,10 +96,16 @@ button:disabled {
     cursor: not-allowed;
 }
 
-/* --- CARROSSEL DE CAMISAS (Input) --- */
+.button-group {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px; /* Espaço uniforme entre botões */
+}
+
 .shirt-selector {
     text-align: center;
-    margin: 20px 0 30px; /* Reduz o espaçamento */
+    margin: 15px 0 25px;
 }
 
 .carousel-container.simplified .carousel {
@@ -117,7 +117,7 @@ button:disabled {
 .carousel {
     display: flex;
     padding: 10px;
-    justify-content: center; /* Centraliza a camisa */
+    justify-content: center;
 }
 
 .shirt-item {
@@ -143,7 +143,7 @@ button:disabled {
 
 .shirt-item p {
     color: #f1f5f9;
-    margin-top: 5px; /* Compacta o texto */
+    margin-top: 5px;
     font-size: 0.9em;
 }
 
@@ -152,7 +152,6 @@ button:disabled {
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
 }
 
-/* --- PRÉVIAS --- */
 .preview-img, #cameraPreview {
     max-width: 220px;
     max-height: 260px;
@@ -160,14 +159,13 @@ button:disabled {
     height: auto;
     object-fit: cover;
     border-radius: 12px;
-    margin-top: 15px; /* Ajusta margem para separação */
+    margin-top: 12px;
     box-shadow: 0 0 12px rgba(15, 23, 42, 0.7);
 }
 
-/* --- PROGRESSO --- */
 #progress-container {
     width: 100%;
-    margin: 20px 0;
+    margin: 15px 0;
     text-align: center;
 }
 
@@ -195,45 +193,54 @@ button:disabled {
     100% { transform: translateX(100%); width: 10%; }
 }
 
-/* --- RESULTADOS DA IA (O CARROSSEL HORIZONTAL) --- */
+
 .result {
     text-align: center;
-    margin-top: 30px;
-    width: 100%; 
-    overflow: hidden; 
-    padding-bottom: 20px; /* Espaçamento extra no final da seção */
+    margin-top: 25px;
+    width: 100%;
+    overflow: hidden;
+    padding-bottom: 20px;
 }
 
 .results-grid {
-    /* CHAVE 1: Usa Flexbox para colocar itens lado a lado */
     display: flex;
     gap: 20px;
     padding: 10px 0;
-    justify-content: flex-start; 
-    /* CHAVE 2: Permite a rolagem horizontal */
-    overflow-x: scroll; 
-    /* Garante rolagem suave (opcional, mas bom) */
-    scroll-snap-type: x mandatory; 
-    
-    /* Remove a barra de rolagem (deixa o carrossel mais limpo, mas ainda rolável) */
-    scrollbar-width: none; 
-    -ms-overflow-style: none;
+    justify-content: center; /* centraliza os itens */
+    overflow-x: auto; /* permite rolagem horizontal */
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin; /* barra fina no Firefox */
+    scrollbar-color: #38bdf8 #334155;
 }
+
 .results-grid::-webkit-scrollbar {
-    display: none;
+    height: 8px;
+}
+
+.results-grid::-webkit-scrollbar-thumb {
+    background-color: #38bdf8;
+    border-radius: 10px;
+}
+
+.results-grid::-webkit-scrollbar-track {
+    background-color: #334155;
 }
 
 .result-block {
-    background: #293444; 
+    background: #293444;
     padding: 15px;
     border-radius: 12px;
     text-align: center;
-    min-width: 250px; /* Largura mínima para o cartão */
-    flex-shrink: 0; /* IMPEDE QUE O ITEM ENCOLHA */
+    min-width: 250px;
+    flex-shrink: 0;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
     border: 1px solid #334155;
-    /* Ajuste para que o scroll-snap funcione */
-    scroll-snap-align: start; 
+    scroll-snap-align: center; 
+    transition: transform 0.2s ease;
+}
+
+.result-block:hover {
+    transform: scale(1.05);
 }
 
 .result-block h3 {
@@ -260,7 +267,6 @@ button:disabled {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* --- UTILS --- */
 .hidden {
     display: none !important;
 }
