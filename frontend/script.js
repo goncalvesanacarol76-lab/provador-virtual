@@ -25,15 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log("Iniciando upload para:", API_UPLOAD_ENDPOINT);
-        resultsContainer.innerHTML = "";
+        resultsContainer.innerHTML = ""; // Limpa resultados anteriores
+        
+        // Esconde o container principal enquanto carrega
+        document.getElementById('result').classList.add('hidden'); 
+        
         statusMessage.classList.remove('hidden');
         statusMessage.textContent = "Processando... Isso pode levar até 3 minutos dependendo da fila do Replicate.";
         progressContainer.classList.remove('hidden');
-        tryonBtn.disabled = true; // Desabilita durante o processamento
+        tryonBtn.disabled = true; 
         
         try {
             const formData = new FormData();
-            // Os nomes 'model_image' e 'garment_image' devem bater com os campos do Multer no backend
             formData.append('model_image', selectedModelFile); 
             formData.append('garment_image', selectedGarmentFile); 
 
@@ -45,17 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (!response.ok) {
-                // Captura erros do backend (incluindo timeout e falha do modelo)
                 throw new Error(data.error || "Erro desconhecido ao processar imagem");
             }
 
             console.log("Resposta do backend:", data);
 
-            // A resposta deve ter 'result_urls' com uma lista de URLs
             if (data.result_urls && Array.isArray(data.result_urls)) {
                 statusMessage.textContent = "Sucesso! Imagens geradas:";
-                resultsContainer.classList.remove('hidden');
-
+                
+                // ✅ CORREÇÃO: Exibe o container de resultados
+                document.getElementById('result').classList.remove('hidden'); 
+                
+                // Limpa e preenche o container
+                resultsContainer.innerHTML = "";
                 data.result_urls.forEach((imgURL, index) => {
                     const block = document.createElement("div");
                     block.className = "result-block";
@@ -85,12 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
             statusMessage.textContent = `Falha na prova virtual: ${error.message}.`;
         } finally {
             progressContainer.classList.add('hidden');
-            checkReadyToTryOn(); // Reativa o botão se os arquivos ainda estiverem lá
+            checkReadyToTryOn(); 
         }
     }
 
     function checkReadyToTryOn() {
-        // Habilita o botão APENAS se tivermos o arquivo da roupa E o arquivo da pessoa
         tryonBtn.disabled = !(selectedGarmentFile && selectedModelFile);
         if (tryonBtn.disabled) {
             statusMessage.textContent = "Aguardando foto e camisa selecionada...";
@@ -124,16 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --------------------------------------
 
     async function startCamera() {
-        stopCameraIfRunning(); // Para qualquer stream anterior
+        stopCameraIfRunning(); 
         try {
-            // Requer que o frontend esteja em HTTPS para funcionar em produção
             cameraStream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: 'user' } 
             });
             cameraPreview.srcObject = cameraStream;
             cameraPreview.classList.remove('hidden');
             captureBtn.classList.remove('hidden');
-            personPreview.classList.add('hidden'); // Esconde prévia do arquivo
+            personPreview.classList.add('hidden'); 
             statusMessage.textContent = "Ajuste a câmera para uma pose de corpo inteiro.";
         } catch(e) {
             alert("Não foi possível acessar a câmera. Verifique as permissões. (Erro: " + e.name + ")");
@@ -161,9 +164,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         canvas.toBlob((blob) => {
             if (!blob) return;
-            // Cria um novo File a partir do blob da câmera
             selectedModelFile = new File([blob], 'foto-camera.png', { type: 'image/png' }); 
-            personPreview.src = URL.createObjectURL(blob); // Mostra prévia da foto tirada
+            personPreview.src = URL.createObjectURL(blob); 
             personPreview.classList.remove('hidden');
             stopCameraIfRunning();
             checkReadyToTryOn();
@@ -178,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nomeCamisaRecebido = params.get('nome');
     const primeiroItemCarrossel = document.querySelector('#shirtCarousel .shirt-item');
 
-    // Função para baixar a URL da camisa e criar o File Blob
     async function selectAndLoadGarment(url, name) {
         if (!primeiroItemCarrossel || !url) return;
 
@@ -196,10 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 2. Baixar a imagem e criar o File
         try {
-            // ✅ Baixa a imagem da URL
             const response = await fetch(url);
             const blob = await response.blob();
-            // ✅ Cria o objeto File a partir do blob
             selectedGarmentFile = new File([blob], "camisa.png", { type: blob.type }); 
             primeiroItemCarrossel.classList.add('selected');
             checkReadyToTryOn();
@@ -213,10 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicialização: Se a camisa veio pela URL, carrega ela.
     if (urlCamisaRecebida) {
-        // Inicia o carregamento logo após o DOM estar pronto
         selectAndLoadGarment(urlCamisaRecebida, nomeCamisaRecebido);
     } else {
-        // Se nenhuma camisa foi passada, exibe uma mensagem
         if (primeiroItemCarrossel) {
              primeiroItemCarrossel.querySelector('p').textContent = "Camisa não carregada.";
              primeiroItemCarrossel.querySelector('img').alt = "Camisa Padrão";
