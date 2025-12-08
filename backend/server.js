@@ -18,7 +18,6 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
-
 app.post(
   "/api/upload",
   upload.fields([
@@ -60,7 +59,7 @@ app.post(
             seed: 0,
             steps: 15,
             guidance_scale: 2,
-            garment_category: "upperbody", // ou lowerbody — você escolhe
+            garment_category: "upperbody",
             model_image: base64Person,
             garment_image: base64Garment
           }
@@ -81,9 +80,9 @@ app.post(
 
       console.log("⏳ Aguardando geração do resultado...");
 
-      let outputImages = null;
+      let finalImageUrl = null;
 
-      // Polling — aguarda resultado
+      // Polling — espera o resultado
       for (let i = 0; i < 90; i++) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -96,7 +95,17 @@ app.post(
         console.log(`Status: ${pollJson.status} (${i + 1}/90)`);
 
         if (pollJson.status === "succeeded") {
-          outputImages = pollJson.output; // Esse modelo retorna 4 imagens
+          const output = pollJson.output;
+
+          if (!output || !output.image) {
+            console.log("❌ Output inválido:", output);
+            return res.status(500).json({
+              error: "A IA não retornou a imagem final.",
+              details: output
+            });
+          }
+
+          finalImageUrl = output.image;
           break;
         }
 
@@ -109,15 +118,14 @@ app.post(
         }
       }
 
-      if (!outputImages) {
+      if (!finalImageUrl) {
         return res.status(504).json({
           error: "Timeout esperando resposta da IA"
         });
       }
 
       console.log("✅ Sucesso! Enviando resultado ao frontend.");
-
-      res.json({ result_urls: outputImages });
+      res.json({ image_url: finalImageUrl });
 
     } catch (err) {
       console.error("🔥 ERRO FATAL:", err);
@@ -128,7 +136,6 @@ app.post(
     }
   }
 );
-
 
 app.get("/", (req, res) => {
   res.send("Backend rodando com oot_diffusion_dc!");
